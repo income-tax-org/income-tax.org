@@ -1,3 +1,8 @@
+// No trailing slash. For absolute URLs shown to readers, such as API examples.
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_APP_URL || "https://income-tax.org"
+).replace(/\/$/, "");
+
 export const INCOME_TAX_CALCULATOR = {
   name: "Income Tax Calculator",
   route: "/",
@@ -30,3 +35,9 @@ export const TAX_TABLES_SHORT_TITLE = "Tax Tables";
 export const CITY_TAXES_SHORT_TITLE = "City Taxes";
 
 export const COMPARE_SHORT_TITLE = "Compare";
+// Footer only: documents the JSON API and MCP server for developers and AI
+// assistants. Not `/api`, which _routes.json sends to Pages Functions.
+export const DEVELOPERS = {
+  name: "API & MCP",
+  route: "/developers",
+};

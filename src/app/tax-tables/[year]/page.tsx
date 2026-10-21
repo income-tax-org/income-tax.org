@@ -1,5 +1,6 @@
 import TaxTables from "@/components/TaxTables";
 import Wrapper from "@/components/Wrapper";
+import ApiHint from "@/components/ApiHint";
 import { TAX_TABLES } from "@/constants/pages";
 import type { YearPageProps } from "@/types/page";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
@@ -11,6 +12,7 @@ export default async function TaxTableYear({ params }: YearPageProps) {
   return (
     <Wrapper title={TAX_TABLES.name}>
       <TaxTables {...data} />
+      <ApiHint endpoint="tax-tables" year={params.year} />
     </Wrapper>
   );
 }

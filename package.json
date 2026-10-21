@@ -11,9 +11,9 @@
     "build": "next build",
     "postbuild": "next-sitemap && node scripts/update-manifest.js",
     "start": "serve out",
-    "lint": "next lint --dir src --dir scripts --dir tests",
-    "lint:fix": "next lint --fix --dir src --dir scripts --dir tests",
-    "typecheck": "tsc --noEmit",
+    "lint": "next lint --dir src --dir scripts --dir tests --dir functions",
+    "lint:fix": "next lint --fix --dir src --dir scripts --dir tests --dir functions",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p functions",
     "test": "npm run typecheck && npm run validate-tax-data && npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
@@ -25,7 +25,11 @@
     "detect-suspect-figures": "ts-node --project tsconfig.json scripts/detect-suspect-figures.ts",
     "generate-og-images": "ts-node --project tsconfig.json scripts/generate-og-images.ts",
     "test:unit:coverage": "vitest run --coverage",
-    "start:test": "serve out -l 3001"
+    "start:test": "serve out -l 3001",
+    "generate-tax-data-registry": "ts-node --project tsconfig.json scripts/generate-tax-data-registry.ts",
+    "prebuild": "npm run generate-tax-data-registry",
+    "dev:functions": "wrangler pages dev out --port 8788",
+    "build:functions": "wrangler pages functions build --outdir .wrangler/functions-build"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -35,6 +39,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.0.8",
+    "@modelcontextprotocol/server": "^2.3.1",
     "@mui/icons-material": "^5.15.6",
     "@mui/material": "^5.15.6",
     "@mui/material-nextjs": "^5.15.6",
@@ -42,9 +47,11 @@
     "dinero.js": "^2.0.2",
     "next": "v14.1.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
     "@playwright/test": "^1.57.0",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^20.19.27",
@@ -70,6 +77,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "wrangler": "^4.128.0"
   }
 }

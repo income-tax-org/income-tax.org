@@ -1,5 +1,6 @@
 import TaxTables from "@/components/TaxTables";
 import Wrapper from "@/components/Wrapper";
+import ApiHint from "@/components/ApiHint";
 import { TAX_TABLES } from "@/constants/pages";
 import type { CityPageProps } from "@/types/page";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
@@ -12,6 +13,12 @@ export default async function TaxTableCity({ params }: CityPageProps) {
   return (
     <Wrapper title={TAX_TABLES.name}>
       <TaxTables {...data} />
+      <ApiHint
+        endpoint="tax-tables"
+        year={params.year}
+        state={params.state}
+        city={params.city}
+      />
     </Wrapper>
   );
 }

@@ -1,6 +1,7 @@
 import {
   CITY_TAXES,
   COMPARE,
+  DEVELOPERS,
   DISCLAIMER,
   INCOME_TAX_CALCULATOR,
   SUPPORT,
@@ -71,6 +72,7 @@ const PAGE_ROUTES: Record<string, string> = {
   [CITY_TAXES.name]: CITY_TAXES.route,
   [COMPARE.name]: COMPARE.route,
   [DISCLAIMER.name]: DISCLAIMER.route,
+  [DEVELOPERS.name]: DEVELOPERS.route,
 };
 
 /**
@@ -178,6 +180,11 @@ export function getPageSpecificMetadata(
   } else if (pageName === CITY_TAXES.name) {
     description = "List all cities with local income taxes by state and year.";
     openGraph.title = `${CITY_TAXES.name}`;
+    openGraph.images = `/og-images/landing.png`;
+  } else if (pageName === DEVELOPERS.name) {
+    description =
+      "Free JSON API and MCP server for US income tax: calculate take-home pay, find the salary for a take-home goal, and look up federal, state and city tax brackets.";
+    openGraph.title = `${DEVELOPERS.name}`;
     openGraph.images = `/og-images/landing.png`;
   } else if (pageName === DISCLAIMER.name) {
     description =

@@ -83,6 +83,37 @@ See [scripts/README.md](./scripts/README.md) for detailed documentation on all a
 
 [get-metadata.ts](src/utils/get-metadata.ts) makes sure each page has a `<meta>` tag pointing to the matching OG image.
 
+## API and MCP Server
+
+`/mcp`, `/api/calculate`, `/api/target` and `/api/tax-tables` are
+[Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/)
+in [functions/](./functions/). Everything else stays static; `public/_routes.json`
+limits Functions to those paths.
+
+- Shared logic lives in [src/mcp/](./src/mcp/): Zod input schemas (no
+  transforms, since they double as MCP JSON Schema), the run/serialize layer,
+  the MCP server factory, and `tax-tables.ts`, which labels every schedule with
+  its `kind` and `basis` so a reader can tell which arithmetic applies. The
+  take-home solver is
+  [src/utils/target-income.ts](./src/utils/target-income.ts).
+- Functions have no filesystem, so tax data is reached through
+  `src/mcp/tax-data-registry.ts`, **generated** by
+  `npm run generate-tax-data-registry` (also run by `prebuild`). After adding a
+  year or state, regenerate it; `tests/unit/tax-data-registry.test.ts` fails if
+  it drifts.
+- Discoverability: [/developers](./src/app/developers/page.tsx) documents the
+  API (its parameter list is generated from the Zod schemas, so it stays in
+  step), [public/llms.txt](./public/llms.txt) summarizes it for language
+  models, and every calculator and tax-tables page renders an
+  [ApiHint](./src/components/ApiHint.tsx) line naming that page's JSON URL,
+  because the pages compute their figures client-side and a fetch of one
+  returns no numbers. Update `llms.txt` by hand when parameters change.
+- Local run: `npm run build && npm run dev:functions` (serves on :8788).
+  `npm run build:functions` only bundles, as a size check.
+- Free plan limits: 100k Function requests/day (static assets are free and
+  unlimited) and **10 ms CPU per request**. `calculate()` is ~0.06 ms, and
+  `target` runs it about 60 times, so keep the solver's evaluation count low.
+
 ## Calculator Logic
 
 The core calculation logic is in [src/utils/calculator.ts](./src/utils/calculator.ts).

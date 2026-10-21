@@ -1,5 +1,6 @@
 import Calculator from "@/components/Calculator";
 import Wrapper from "@/components/Wrapper";
+import ApiHint from "@/components/ApiHint";
 import { INCOME_TAX_CALCULATOR } from "@/constants/pages";
 import { getCityPageData } from "@/utils/get-page-data";
 import type { CityPageParams, CityPageProps } from "@/types/page";
@@ -12,6 +13,12 @@ export default async function City({ params }: CityPageProps) {
   return (
     <Wrapper title={INCOME_TAX_CALCULATOR.name}>
       <Calculator {...data} />
+      <ApiHint
+        endpoint="calculate"
+        year={params.year}
+        state={params.state}
+        city={params.city}
+      />
     </Wrapper>
   );
 }

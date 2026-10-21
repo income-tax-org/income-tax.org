@@ -26,6 +26,7 @@ import {
   COMPARE,
   COMPARE_SHORT_TITLE,
   DISCLAIMER,
+  DEVELOPERS,
 } from "@/constants/pages";
 import {
   AttachMoney,
@@ -34,6 +35,7 @@ import {
   LocationCity,
   GavelOutlined,
   CompareArrows,
+  Code,
 } from "@mui/icons-material";
 import Link from "next/link";
 import Footer from "./Footer";
@@ -116,6 +118,20 @@ export default function Wrapper({
       },
     ];
   }, [title, activePage]);
+
+  // The API page is for developers and AI assistants, so it is linked from the
+  // footer rather than taking a slot in the main navigation.
+  const footerPages: NavPage[] = useMemo(
+    () => [
+      ...pages,
+      {
+        ...DEVELOPERS,
+        icon: <Code />,
+        selected: (activePage ?? title) === DEVELOPERS.name,
+      },
+    ],
+    [pages, title, activePage],
+  );
 
   return (
     <>
@@ -276,7 +292,7 @@ export default function Wrapper({
         <Toolbar />
         {children}
       </Container>
-      <Footer pages={pages} />
+      <Footer pages={footerPages} />
     </>
   );
 }

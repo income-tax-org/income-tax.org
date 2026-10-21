@@ -1,0 +1,27 @@
+# Income Tax Calculator
+
+> US income tax calculator covering federal, state and city taxes, including local income and payroll taxes most calculators leave out. Everything on the site is also available as JSON and through an MCP server, with no API key.
+
+The web pages work out their results in the browser with JavaScript, so fetching a calculator page returns no figures. Use the API below instead.
+
+## MCP server
+
+- [MCP endpoint](https://income-tax.org/mcp): Streamable HTTP, no authentication. Tools: `calculate`, `target`, `tax_tables`.
+
+## JSON API
+
+- [calculate](https://income-tax.org/api/calculate?income=120000&state=new_york&city=new_york_city): take-home pay and every tax for an annual gross income. Required: `income`, `state`. Optional: `city`, `year`, `filing_status` (single, married, married_separately, head_of_household), `retirement_contribution` (pre-tax 401(k)/IRA dollars), `federal_deductions`, `state_deductions` (default: standard deduction), `exempt_taxes` (comma-separated `scope:tax`), `pay_frequency` (weekly, biweekly, semi_monthly, monthly).
+- [target](https://income-tax.org/api/target?take_home=6000&target_period=monthly&state=texas): the gross income needed for a take-home goal. Required: `take_home`, `state`. `target_period` is annual (default) or a pay frequency. Accepts the same optional parameters as calculate.
+- [tax_tables](https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=single): brackets, rates, standard deductions and the 401(k) limit. All optional: `year`, `state` (omit for federal only), `city`, `filing_status`, `tax_types` (comma-separated).
+
+States and cities are snake_case (`new_york`, `new_york_city`). Invalid input returns HTTP 400 with the valid values. Amounts are US dollars per year unless labelled per paycheck.
+
+## Docs
+
+- [API & MCP documentation](https://income-tax.org/developers/): every parameter, with defaults.
+- [Disclaimer](https://income-tax.org/disclaimer/): results are estimates for a single wage earner, not tax advice.
+
+## Optional
+
+- [Tax tables](https://income-tax.org/tax-tables/): browsable federal, state and city tax tables.
+- [Cities with income taxes](https://income-tax.org/city-taxes/): every city and county with its own taxes.

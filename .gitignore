@@ -44,3 +44,6 @@ logs/
 # local agent/tooling scratch
 .claude/
 .playwright-mcp/
+
+# wrangler (Pages Functions local dev and bundle checks)
+.wrangler/
