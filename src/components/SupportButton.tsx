@@ -11,7 +11,7 @@ type SupportButtonProps = {
 export function SupportButton({ asLink }: SupportButtonProps) {
   const href =
     process.env.NEXT_PUBLIC_NEW_REPO_ISSUE_LINK ||
-    "https://github.com/Ebonsignori/income-tax-calculator/issues";
+    "https://github.com/income-tax-org/income-tax.org/issues";
   if (asLink) {
     return (
       <MuiLink color="inherit" component={Link} href={href}>
