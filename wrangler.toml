@@ -1,5 +1,5 @@
 # Cloudflare Pages project config. With this file present, Pages reads the
 # runtime settings below from the repo rather than the dashboard.
-name = "income-tax-calculator"
+name = "income-tax-org"
 pages_build_output_dir = "out"
 compatibility_date = "2026-09-01"
