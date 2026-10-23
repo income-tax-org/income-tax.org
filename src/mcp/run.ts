@@ -214,6 +214,31 @@ function pageUrl(siteUrl: string, resolved: Resolved, income: number): string {
   return `${siteUrl}/${path}/?income=${Math.round(income)}`;
 }
 
+/**
+ * Where to read the schedules behind a result: the tax_tables API for the
+ * same year, location and filing status, and the matching tax-tables page.
+ *
+ * Spelled out in full rather than left for the caller to build, because some
+ * clients -- claude.ai's web fetch, for one -- will only open a URL that has
+ * already appeared in something they fetched.
+ */
+function taxTableLinks(siteUrl: string, resolved: Resolved) {
+  const query = new URLSearchParams({
+    year: resolved.year,
+    state: resolved.state,
+    ...(resolved.city && { city: resolved.city }),
+    filing_status: resolved.filingStatus,
+  });
+  const path = [resolved.year, resolved.state, resolved.city]
+    .filter(Boolean)
+    .map(snakeToDashCase)
+    .join("/");
+  return {
+    tax_tables: `${siteUrl}/api/tax-tables?${query}`,
+    tax_tables_page: `${siteUrl}/tax-tables/${path}/`,
+  };
+}
+
 function describe(resolved: Resolved, income: number, siteUrl: string) {
   const result = run(resolved, income);
   const gross = asCurrency(income);
@@ -325,6 +350,7 @@ function describe(resolved: Resolved, income: number, siteUrl: string) {
     },
     notes,
     source: pageUrl(siteUrl, resolved, income),
+    links: taxTableLinks(siteUrl, resolved),
   };
 }
 

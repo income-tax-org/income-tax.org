@@ -5,8 +5,9 @@ import { toUnit } from "@/utils/money";
 import type { TaxData } from "@/types";
 import federal2026 from "@/data/2026/federal";
 import newYork2026 from "@/data/2026/state/new_york";
-import { calculateInput } from "@/mcp/inputs";
-import type { CalculateInput } from "@/mcp/inputs";
+import { calculateInput, taxTablesInput } from "@/mcp/inputs";
+import type { CalculateInput, TaxTablesInput } from "@/mcp/inputs";
+import { runTaxTables } from "@/mcp/tax-tables";
 import { InputError, runCalculate } from "@/mcp/run";
 import { handleGet, parseQuery } from "@/mcp/http";
 import { createServer } from "@/mcp/server";
@@ -121,6 +122,42 @@ describe("runCalculate", () => {
     );
     const below = await calc({ income: 90_000, state: "oregon" });
     expect(below.notes).toEqual([]);
+  });
+
+  it("links the tax tables behind the result, and the link works", async () => {
+    const result = await calc({
+      income: 120_000,
+      state: "new_york",
+      city: "new_york_city",
+      filing_status: "married",
+      year: "2025",
+    });
+    expect(result.links.tax_tables).toBe(
+      `${SITE}/api/tax-tables?year=2025&state=new_york&city=new_york_city&filing_status=married`,
+    );
+    expect(result.links.tax_tables_page).toBe(
+      `${SITE}/tax-tables/2025/new-york/new-york-city/`,
+    );
+
+    // Follow it the way the route would.
+    const query = new URL(result.links.tax_tables).searchParams;
+    const tables = await runTaxTables(
+      taxTablesInput.parse(parseQuery(query)) as TaxTablesInput,
+      SITE,
+    );
+    expect(tables.location).toEqual({
+      year: "2025",
+      state: "new_york",
+      city: "new_york_city",
+      filing_status: "married",
+    });
+  });
+
+  it("leaves city out of the link when there is none", async () => {
+    const result = await calc({ income: 50_000, state: "texas" });
+    expect(new URL(result.links.tax_tables).searchParams.has("city")).toBe(
+      false,
+    );
   });
 
   it("honours exemptions", async () => {

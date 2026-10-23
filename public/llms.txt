@@ -10,7 +10,7 @@ The web pages work out their results in the browser with JavaScript, so fetching
 - [target](https://income-tax.org/api/target?take_home=6000&target_period=monthly&state=texas): the gross income needed for a take-home goal. Required: `take_home`, `state`. `target_period` is annual (default) or a pay frequency. Accepts the same optional parameters as calculate.
 - [tax_tables](https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=single): brackets, rates, standard deductions and the 401(k) limit. All optional: `year`, `state` (omit for federal only), `city`, `filing_status`, `tax_types` (comma-separated).
 
-States and cities are snake_case (`new_york`, `new_york_city`). Invalid input returns HTTP 400 with the valid values. Amounts are US dollars per year unless labelled per paycheck.
+Every calculate and target response includes `links.tax_tables`, the full tax_tables URL for the same location and filing status: follow it to see the brackets behind a result. States and cities are snake_case (`new_york`, `new_york_city`). Invalid input returns HTTP 400 with the valid values. Amounts are US dollars per year unless labelled per paycheck.
 
 - [OpenAPI 3.1 spec](https://income-tax.org/openapi.json): all three endpoints, for agent frameworks and ChatGPT GPT Actions.
 

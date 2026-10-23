@@ -61,7 +61,7 @@ const TOOLS = [
     name: "calculate",
     route: "/api/calculate",
     summary:
-      "Take-home pay and every federal, state and local tax for an annual gross income, with per-paycheck figures, taxable income and the marginal rate.",
+      "Take-home pay and every federal, state and local tax for an annual gross income, with per-paycheck figures, taxable income and the marginal rate. links.tax_tables in the response is the tax_tables URL for the same location, ready to fetch.",
     example: "?income=120000&state=new_york&city=new_york_city",
     schema: calculateInput,
   },

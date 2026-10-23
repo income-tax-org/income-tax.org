@@ -134,7 +134,7 @@ export function buildOpenApiSpec(siteUrl: string) {
         "Calculate take-home pay",
         "Take-home pay and every federal, state and local tax for an annual gross income, with per-paycheck figures, taxable income, the marginal rate and a per-tax breakdown.",
         calculateInput,
-        "Take-home pay, totals by jurisdiction, taxable income, credits, the marginal rate, a per-tax breakdown, notes, and a link to the same result on the site.",
+        "Take-home pay, totals by jurisdiction, taxable income, credits, the marginal rate, a per-tax breakdown, notes, a link to the same result on the site, and `links.tax_tables`: the ready-made /api/tax-tables URL for the brackets behind it.",
       ),
       "/api/target": operation(
         "target",
