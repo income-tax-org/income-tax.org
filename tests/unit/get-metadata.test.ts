@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import { getPageSpecificMetadata } from "@/utils/get-metadata";
 import {
   CITY_TAXES,
+  DEVELOPERS,
   DISCLAIMER,
   INCOME_TAX_CALCULATOR,
+  SITE_URL,
   SUPPORT,
   TAX_TABLES,
 } from "@/constants/pages";
@@ -32,6 +34,12 @@ describe("canonical URLs", () => {
     expect(
       canonicalOf(getPageSpecificMetadata(INCOME_TAX_CALCULATOR.name, "2023")),
     ).toContain("/2023/");
+  });
+
+  it("keeps the API & MCP page on its own route, not the homepage", () => {
+    expect(canonicalOf(getPageSpecificMetadata(DEVELOPERS.name))).toBe(
+      `${SITE_URL}${DEVELOPERS.route}/`,
+    );
   });
 
   it("keeps a state page on its own URL even in the newest year", () => {

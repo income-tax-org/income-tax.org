@@ -27,6 +27,7 @@ import {
   COMPARE_SHORT_TITLE,
   DISCLAIMER,
   DEVELOPERS,
+  DEVELOPERS_SHORT_TITLE,
 } from "@/constants/pages";
 import {
   AttachMoney,
@@ -116,22 +117,14 @@ export default function Wrapper({
         icon: <GavelOutlined />,
         selected: current === DISCLAIMER.name,
       },
+      {
+        name: DEVELOPERS_SHORT_TITLE,
+        route: DEVELOPERS.route,
+        icon: <Code />,
+        selected: current === DEVELOPERS.name,
+      },
     ];
   }, [title, activePage]);
-
-  // The API page is for developers and AI assistants, so it is linked from the
-  // footer rather than taking a slot in the main navigation.
-  const footerPages: NavPage[] = useMemo(
-    () => [
-      ...pages,
-      {
-        ...DEVELOPERS,
-        icon: <Code />,
-        selected: (activePage ?? title) === DEVELOPERS.name,
-      },
-    ],
-    [pages, title, activePage],
-  );
 
   return (
     <>
@@ -182,6 +175,10 @@ export default function Wrapper({
                   aria-current={selected ? "page" : undefined}
                   sx={{
                     position: "relative",
+                    // Size to the label rather than MUI's 64px minimum, which
+                    // padded a short label like "MCP" out to the width that
+                    // pushed the site title into truncation at 900px.
+                    minWidth: 0,
                     fontWeight: selected ? "bold" : "normal",
                     whiteSpace: "nowrap",
                     // A drawn bar rather than text-decoration, which cannot be
@@ -292,7 +289,7 @@ export default function Wrapper({
         <Toolbar />
         {children}
       </Container>
-      <Footer pages={footerPages} />
+      <Footer pages={pages} />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import Calculator from "@/components/Calculator";
 import Wrapper from "@/components/Wrapper";
-import ApiHint from "@/components/ApiHint";
 import { INCOME_TAX_CALCULATOR } from "@/constants/pages";
 import type { YearPageParams, YearPageProps } from "@/types/page";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
@@ -12,7 +11,6 @@ export default async function Year({ params }: YearPageProps) {
   return (
     <Wrapper title={INCOME_TAX_CALCULATOR.name}>
       <Calculator {...data} />
-      <ApiHint endpoint="calculate" year={params.year} />
     </Wrapper>
   );
 }

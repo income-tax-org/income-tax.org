@@ -103,11 +103,9 @@ limits Functions to those paths.
   it drifts.
 - Discoverability: [/developers](./src/app/developers/page.tsx) documents the
   API (its parameter list is generated from the Zod schemas, so it stays in
-  step), [public/llms.txt](./public/llms.txt) summarizes it for language
-  models, and every calculator and tax-tables page renders an
-  [ApiHint](./src/components/ApiHint.tsx) line naming that page's JSON URL,
-  because the pages compute their figures client-side and a fetch of one
-  returns no numbers. Update `llms.txt` by hand when parameters change.
+  step) and is the last link, "MCP", in the header and footer.
+  [public/llms.txt](./public/llms.txt) summarizes it for language models;
+  update it by hand when parameters change.
 - Local run: `npm run build && npm run dev:functions` (serves on :8788).
   `npm run build:functions` only bundles, as a size check.
 - Free plan limits: 100k Function requests/day (static assets are free and

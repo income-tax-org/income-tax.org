@@ -35,9 +35,12 @@ export const TAX_TABLES_SHORT_TITLE = "Tax Tables";
 export const CITY_TAXES_SHORT_TITLE = "City Taxes";
 
 export const COMPARE_SHORT_TITLE = "Compare";
-// Footer only: documents the JSON API and MCP server for developers and AI
-// assistants. Not `/api`, which _routes.json sends to Pages Functions.
+
+// Documents the JSON API and MCP server for developers and AI assistants.
+// Not `/api`, which _routes.json sends to Pages Functions.
 export const DEVELOPERS = {
   name: "API & MCP",
   route: "/developers",
 };
+
+export const DEVELOPERS_SHORT_TITLE = "MCP";

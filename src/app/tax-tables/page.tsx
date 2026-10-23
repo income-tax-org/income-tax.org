@@ -1,6 +1,5 @@
 import TaxTables from "@/components/TaxTables";
 import Wrapper from "@/components/Wrapper";
-import ApiHint from "@/components/ApiHint";
 import { TAX_TABLES } from "@/constants/pages";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
 import { getLandingPageData } from "@/utils/get-page-data";
@@ -10,7 +9,6 @@ export default async function TaxTableLanding() {
   return (
     <Wrapper title={TAX_TABLES.name}>
       <TaxTables {...data} />
-      <ApiHint endpoint="tax-tables" />
     </Wrapper>
   );
 }

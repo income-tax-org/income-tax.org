@@ -4,14 +4,37 @@ import MuiLink from "@mui/material/Link";
 import { Box, Divider } from "@mui/material";
 import type { NavPage } from "@/types";
 import Link from "next/link";
+import { DEVELOPERS } from "@/constants/pages";
 import { SupportButton } from "./SupportButton";
 
 type FooterProps = {
   pages: NavPage[];
 };
 
+type FooterLink = { name: string; href: string; external?: boolean };
+
 export default function Footer({ pages }: FooterProps) {
   const visiblePages = pages.filter(({ selected }) => !selected);
+  const toLink = ({ name, route }: NavPage): FooterLink => ({
+    name,
+    href: route,
+  });
+
+  // The MCP link goes last, after the external Open Source link, matching its
+  // place at the end of the header navigation.
+  const links: FooterLink[] = [
+    ...visiblePages
+      .filter(({ route }) => route !== DEVELOPERS.route)
+      .map(toLink),
+    {
+      name: "Open Source",
+      href: process.env.NEXT_PUBLIC_REPO ?? "",
+      external: true,
+    },
+    ...visiblePages
+      .filter(({ route }) => route === DEVELOPERS.route)
+      .map(toLink),
+  ];
 
   return (
     <Box
@@ -59,31 +82,34 @@ export default function Footer({ pages }: FooterProps) {
           gap: 0,
         }}
       >
-        {visiblePages.map(({ name, route }) => (
-          <Box key={route} component="span" sx={{ whiteSpace: "nowrap" }}>
-            <MuiLink
-              color="inherit"
-              component={Link}
-              href={route}
-              prefetch={false}
-            >
-              {name}
-            </MuiLink>
-            <Box component="span" sx={{ mx: 1.5 }}>
-              •
-            </Box>
+        {links.map(({ name, href, external }, index) => (
+          <Box key={href} component="span" sx={{ whiteSpace: "nowrap" }}>
+            {external ? (
+              <MuiLink
+                color="inherit"
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {name}
+              </MuiLink>
+            ) : (
+              <MuiLink
+                color="inherit"
+                component={Link}
+                href={href}
+                prefetch={false}
+              >
+                {name}
+              </MuiLink>
+            )}
+            {index < links.length - 1 && (
+              <Box component="span" sx={{ mx: 1.5 }}>
+                •
+              </Box>
+            )}
           </Box>
         ))}
-        <Box component="span" sx={{ whiteSpace: "nowrap" }}>
-          <MuiLink
-            color="inherit"
-            href={process.env.NEXT_PUBLIC_REPO}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open Source
-          </MuiLink>
-        </Box>
       </Typography>
       <Typography variant="body2" color="text.secondary">
         {"Copyright © "}
