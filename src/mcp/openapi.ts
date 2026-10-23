@@ -114,8 +114,10 @@ export function buildOpenApiSpec(siteUrl: string) {
     info: {
       title: "US Income Tax Calculator API",
       version: "1.0.0",
-      // No `license`: the repository is "All Rights Reserved", so there is no
-      // open license to name here.
+      license: {
+        name: "MIT",
+        identifier: "MIT",
+      },
       description: `Free US federal, state and local income tax calculations, with no API key. The same calculation as ${siteUrl}. Amounts are US dollars per year unless labelled per_paycheck. FICA and state payroll programs are charged on gross wages; a 401(k)/IRA contribution and deductions lower income tax only. Tax data covers ${YEARS.join(", ")}. Estimates for a single wage earner, not tax advice. Also available as an MCP server at ${siteUrl}/mcp.`,
     },
     servers: [{ url: siteUrl }],

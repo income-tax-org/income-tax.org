@@ -4,6 +4,7 @@
   "description": "An income tax calculator for the United States.",
   "version": "0.0.0",
   "private": false,
+  "license": "MIT",
   "scripts": {
     "go": "npm run lint:fix && npm run build && node open.js 3001 && npm run start",
     "dev": "node open.js 3001 && next dev -p 3001",

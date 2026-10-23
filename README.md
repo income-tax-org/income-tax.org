@@ -49,6 +49,10 @@ https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=s
 
 Bad input returns a 400 listing the valid values. Results are estimates, not tax advice.
 
+## License
+
+[MIT](./LICENSE.txt). The code, the tax data and the API are free to use, copy and build on.
+
 ## Contributing
 
 If your city isn't included and you'd like to add it, see the [src/data/README.md](./src/data/README.md).
