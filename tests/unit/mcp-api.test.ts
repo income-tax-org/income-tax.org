@@ -113,6 +113,16 @@ describe("runCalculate", () => {
     expect(texas.state_credits.personal_exemption).toBe(0);
   });
 
+  it("keeps the marginal rate sane at Oregon's credit cliff and says why", async () => {
+    const atCliff = await calc({ income: 100_000, state: "oregon" });
+    expect(atCliff.marginal_tax_rate_percent).toBeLessThan(60);
+    expect(atCliff.notes.join(" ")).toMatch(
+      /AGI above 100000\) loses the 263 oregon personal exemption credit/,
+    );
+    const below = await calc({ income: 90_000, state: "oregon" });
+    expect(below.notes).toEqual([]);
+  });
+
   it("honours exemptions", async () => {
     const result = await calc({
       income: 100_000,

@@ -9,11 +9,21 @@ import type { FilingStatus } from "@/constants/filing-status";
 import type { TaxOption } from "@/utils/get-tax-options";
 import { TaxBreakdownBar } from "./TaxBreakdownBar";
 import { BracketLadder } from "./BracketLadder";
-import { getMarginalRate } from "@/utils/marginal-rate";
+import { getMarginalRate, MARGINAL_WINDOW } from "@/utils/marginal-rate";
+import {
+  exemptionCreditCliffWithin,
+  withExemptionCreditPinned,
+} from "@/utils/standard-deduction";
+import { snakeToTitleCase } from "@/utils/string-utils";
 import { collectBracketSchedules } from "@/utils/bracket-schedules";
 import { formatPercent } from "@/utils/format-percent";
 import { TableBreakdown } from "./TableBreakdown";
-import { formatMoney, toUnit } from "@/utils/money";
+import {
+  asCurrency,
+  formatMoney,
+  formatMoneyNoCents,
+  toUnit,
+} from "@/utils/money";
 
 /** Kept in sync with the sticky bar's own height so the two cannot drift. */
 const STICKY_SUMMARY_HEIGHT = 56;
@@ -93,13 +103,22 @@ const Results = memo(function Results({
     return (toUnit(totalTaxes) / totalIncome) * 100;
   }, [totalTaxes, totalIncome]);
 
+  // Measured with the state's exemption credit pinned at this income, so the
+  // rate describes the brackets on the filer's side of Oregon's credit cliff
+  // rather than the cliff itself; `creditCliff` reports the cliff separately.
+  const agi = Math.max(0, totalIncome - totalIRA);
   const marginalRate = useMemo(() => {
     if (!totalIncome) return null;
+    const pinnedStateTaxes = withExemptionCreditPinned(
+      stateTaxes,
+      filingStatus,
+      agi,
+    );
     const taxAt = (income: number) =>
       toUnit(
         calculate(
           federalTaxes,
-          stateTaxes,
+          pinnedStateTaxes,
           income,
           filingStatus,
           totalIRA,
@@ -123,6 +142,19 @@ const Results = memo(function Results({
     stateTaxes,
     USACity,
   ]);
+
+  const creditCliff = useMemo(
+    () =>
+      totalIncome
+        ? exemptionCreditCliffWithin(
+            stateTaxes,
+            filingStatus,
+            agi,
+            MARGINAL_WINDOW,
+          )
+        : null,
+    [stateTaxes, filingStatus, agi, totalIncome],
+  );
 
   const bracketSchedules = useMemo(
     () =>
@@ -277,6 +309,20 @@ const Results = memo(function Results({
                 ? "averaged over a rate change"
                 : "on your next $1 earned"}
             </Typography>
+            {creditCliff ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, maxWidth: 260 }}
+                data-testid="credit-cliff-note"
+              >
+                Earning more than{" "}
+                {formatMoneyNoCents(asCurrency(creditCliff.limit + totalIRA))}{" "}
+                loses {snakeToTitleCase(USAState)}&apos;s{" "}
+                {formatMoneyNoCents(asCurrency(creditCliff.amount))} exemption
+                credit.
+              </Typography>
+            ) : null}
           </Box>
         ) : null}
       </Box>

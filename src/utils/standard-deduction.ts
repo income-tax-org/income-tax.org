@@ -166,6 +166,71 @@ export function personalExemptionCreditFor(
 }
 
 /**
+ * The state's data with its exemption credit pinned to what this income
+ * qualifies for.
+ *
+ * For measuring a marginal rate across a window: Oregon's credit stops dead
+ * one dollar past its AGI limit, so a window that straddles the limit
+ * reports the cliff (300%+) rather than the brackets the filer is in. Pinning
+ * the *available* credit, rather than subtracting the applied amount, keeps
+ * the nonrefundable floor working inside the window.
+ */
+export function withExemptionCreditPinned(
+  taxData: TaxData,
+  filingStatus: FilingStatus,
+  income: number,
+): TaxData {
+  const declared = taxData?.[PERSONAL_EXEMPTION_CREDIT] as
+    | StandardDeductionByFilingStatus
+    | undefined;
+  if (!declared) {
+    return taxData;
+  }
+  return {
+    ...taxData,
+    [PERSONAL_EXEMPTION_CREDIT]: {
+      ...declared,
+      [filingStatus]: personalExemptionCreditFor(taxData, filingStatus, income),
+    },
+  };
+}
+
+export type ExemptionCreditCliff = {
+  /** The credit is lost once AGI is more than this. */
+  limit: number;
+  /** What is lost. */
+  amount: number;
+};
+
+/**
+ * The exemption credit's AGI limit, when income `window` dollars higher would
+ * lose a credit this income still gets; otherwise null.
+ */
+export function exemptionCreditCliffWithin(
+  taxData: TaxData,
+  filingStatus: FilingStatus,
+  income: number,
+  window: number,
+): ExemptionCreditCliff | null {
+  const declared = taxData?.[PERSONAL_EXEMPTION_CREDIT] as
+    | StandardDeductionByFilingStatus
+    | undefined;
+  const bands = declared?.[filingStatus];
+  if (!isBandedDeduction(bands)) {
+    return null;
+  }
+  const amount = resolveStandardDeduction(bands, income) ?? 0;
+  if (amount <= 0) {
+    return null;
+  }
+  const lost = bands.find(
+    (band) =>
+      band.min > income && band.min <= income + window && band.amount === 0,
+  );
+  return lost ? { limit: lost.min - 1, amount } : null;
+}
+
+/**
  * Every filing status's deduction resolved at one income.
  *
  * The UI prefills its deduction fields from this, so it needs numbers rather

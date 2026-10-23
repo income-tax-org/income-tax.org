@@ -5,6 +5,7 @@ import {
   MARGINAL_WINDOW,
 } from "@/utils/marginal-rate";
 import { calculate } from "@/utils/calculator";
+import { withExemptionCreditPinned } from "@/utils/standard-deduction";
 import { toUnit } from "@/utils/money";
 import { INFINITY } from "@/constants";
 import { ALL, SINGLE } from "@/constants/filing-status";
@@ -98,6 +99,36 @@ describe("getMarginalRate", () => {
       const atCliff = getMarginalRate(portlandTaxAt, 100_000);
       expect(atCliff.spansRateChange).toBe(true);
       expect(atCliff.percent).toBeGreaterThan(100);
+    });
+
+    it("measures the brackets, not the cliff, with the credit pinned", () => {
+      // What the results page does: hold the credit this income qualifies for.
+      const pinned = withExemptionCreditPinned(
+        oregon2025 as TaxData,
+        SINGLE as FilingStatus,
+        100_000,
+      );
+      const pinnedTaxAt = (income: number) =>
+        toUnit(
+          calculate(
+            federal2025 as TaxData,
+            pinned,
+            income,
+            SINGLE as FilingStatus,
+            0,
+            undefined,
+            undefined,
+            [],
+            "oregon",
+            "portland",
+          ).totalTaxes,
+        );
+      const atCliff = getMarginalRate(pinnedTaxAt, 100_000);
+      expect(atCliff.percent).toBeLessThan(60);
+      expect(atCliff.percent).toBeCloseTo(
+        getMarginalRate(portlandTaxAt, 99_000).percent,
+        0,
+      );
     });
   });
 });

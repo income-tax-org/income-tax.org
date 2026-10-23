@@ -18,10 +18,14 @@ import {
   getPercent,
 } from "@/utils/calculator";
 import type { TaxOption } from "@/utils/get-tax-options";
-import { getMarginalRate } from "@/utils/marginal-rate";
+import { getMarginalRate, MARGINAL_WINDOW } from "@/utils/marginal-rate";
 import type { Money } from "@/utils/money";
 import { asCurrency, toCents, toUnit } from "@/utils/money";
-import { standardDeductionFor } from "@/utils/standard-deduction";
+import {
+  exemptionCreditCliffWithin,
+  standardDeductionFor,
+  withExemptionCreditPinned,
+} from "@/utils/standard-deduction";
 import { snakeToDashCase } from "@/utils/string-utils";
 import { solveForIncome } from "@/utils/target-income";
 import type { CalculateInput, TargetInput } from "./inputs";
@@ -215,9 +219,24 @@ function describe(resolved: Resolved, income: number, siteUrl: string) {
   const gross = asCurrency(income);
   const contribution = contributionAt(resolved, income);
   const afterContribution = Math.max(0, income - contribution);
-  const taxAt = (atIncome: number) =>
-    toUnit(run(resolved, atIncome).totalTaxes);
+  // Pinned at this income, as the site does: across Oregon's exemption-credit
+  // cliff the window would otherwise report the cliff (300%+), not a rate.
+  const pinned = {
+    ...resolved,
+    stateData: withExemptionCreditPinned(
+      resolved.stateData,
+      resolved.filingStatus,
+      afterContribution,
+    ),
+  };
+  const taxAt = (atIncome: number) => toUnit(run(pinned, atIncome).totalTaxes);
   const marginal = getMarginalRate(taxAt, income);
+  const creditCliff = exemptionCreditCliffWithin(
+    resolved.stateData,
+    resolved.filingStatus,
+    afterContribution,
+    MARGINAL_WINDOW,
+  );
 
   const notes: string[] = [];
   if (contribution < resolved.requestedContribution) {
@@ -226,6 +245,11 @@ function describe(resolved: Resolved, income: number, siteUrl: string) {
         (contribution === income
           ? "it cannot exceed income."
           : `the ${resolved.year} 401(k) limit is ${resolved.maxContribution}.`),
+    );
+  }
+  if (creditCliff) {
+    notes.push(
+      `Income above ${creditCliff.limit + contribution} (federal AGI above ${creditCliff.limit}) loses the ${creditCliff.amount} ${resolved.state} personal exemption credit, so take-home drops by about that much just past it. marginal_tax_rate_percent excludes this cliff.`,
     );
   }
 

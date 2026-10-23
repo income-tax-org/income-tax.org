@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  exemptionCreditCliffWithin,
   isBandedDeduction,
+  personalExemptionCreditFor,
   resolveStandardDeduction,
   standardDeductionFor,
   resolveStandardDeductionMap,
+  withExemptionCreditPinned,
 } from "@/utils/standard-deduction";
 import { calculate } from "@/utils/calculator";
 import { INFINITY, CITIES } from "@/constants";
@@ -24,6 +27,7 @@ import { BIRMINGHAM } from "@/constants/cities";
 import type { DeductionBand, TaxData } from "@/types";
 import { toUnit } from "@/utils/money";
 import wisconsin2025 from "@/data/2025/state/wisconsin";
+import oregon2026 from "@/data/2026/state/oregon";
 import wisconsin2023 from "@/data/2023/state/wisconsin";
 import oregon2025 from "@/data/2025/state/oregon";
 import federal2025 from "@/data/2025/federal";
@@ -480,5 +484,43 @@ describe("a city inheriting a banded state deduction", () => {
   it("inherits the floor above the phase-out", () => {
     // 1% of (40,000 - 5,000)
     expect(cityTaxOn(40_000)).toBe(350);
+  });
+});
+
+describe("Oregon's exemption credit cliff", () => {
+  const oregon = oregon2026 as TaxData;
+
+  it("pins the credit at this income, leaving other statuses alone", () => {
+    const pinned = withExemptionCreditPinned(oregon, SINGLE, 100_000);
+    expect(personalExemptionCreditFor(pinned, SINGLE, 100_500)).toBe(263);
+    expect(personalExemptionCreditFor(pinned, MARRIED, 250_000)).toBe(0);
+  });
+
+  it("pins zero for an income already past the limit", () => {
+    const pinned = withExemptionCreditPinned(oregon, SINGLE, 100_001);
+    expect(personalExemptionCreditFor(pinned, SINGLE, 50_000)).toBe(0);
+  });
+
+  it("leaves a state without the credit untouched", () => {
+    expect(withExemptionCreditPinned(wisconsin2025 as TaxData, SINGLE, 1)).toBe(
+      wisconsin2025,
+    );
+  });
+
+  it("reports the cliff only when the window reaches it", () => {
+    expect(exemptionCreditCliffWithin(oregon, SINGLE, 99_950, 100)).toEqual({
+      limit: 100_000,
+      amount: 263,
+    });
+    expect(exemptionCreditCliffWithin(oregon, SINGLE, 100_000, 100)).toEqual({
+      limit: 100_000,
+      amount: 263,
+    });
+    expect(exemptionCreditCliffWithin(oregon, SINGLE, 99_000, 100)).toBeNull();
+    expect(exemptionCreditCliffWithin(oregon, SINGLE, 100_001, 100)).toBeNull();
+    expect(exemptionCreditCliffWithin(oregon, MARRIED, 199_950, 100)).toEqual({
+      limit: 200_000,
+      amount: 526,
+    });
   });
 });
