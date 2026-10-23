@@ -13,6 +13,7 @@ import {
   FEDERAL_TAX_SUBTRACTION,
   OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE,
   OREGON_TRANSIT_TAX,
+  PERSONAL_EXEMPTION_CREDIT,
   PRESCHOOL_FOR_ALL,
   STANDARD_DEDUCTION,
   STATE_INCOME,
@@ -88,6 +89,39 @@ export default {
       { min: 270000, max: 280000, amount: 3500 },
       { min: 280000, max: 290000, amount: 1750 },
       { min: 290000, max: INFINITY, amount: 0 },
+    ],
+  },
+  // Exemption credit. $263 is verified 2026-10-23 against the 2026 withholding
+  // tax formulas (150-206-436, Rev. 12-31-25), which subtract "263 x
+  // allowances" -- Oregon's withholding allowance is its exemption credit,
+  // as the $256 in that document's leftover 2025 example shows. Publication
+  // OR-ESTIMATE 2026 (Rev. 10-07-25) printed $260 before that revision, the
+  // same early-estimate gap as the standard deduction above. The $100,000 /
+  // $200,000 AGI limits are statutory and unchanged since 2023. Re-check the
+  // amount against the line 25 worksheet when 2026 OR-40 instructions publish.
+  // https://www.oregon.gov/dor/forms/FormsPubs/withholding-tax-formulas_206-436_2026.pdf
+  //
+  // A nonrefundable credit per exemption, off Oregon income tax only. The
+  // figures below are the total for the filer (and spouse, filing jointly);
+  // dependents would add one exemption each but are not modelled. "More than
+  // $100,000" means $100,000 itself still qualifies, so the cliff band starts
+  // one dollar up, per the half-open band convention.
+  [PERSONAL_EXEMPTION_CREDIT]: {
+    [SINGLE]: [
+      { min: 0, max: 100001, amount: 263 },
+      { min: 100001, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 200001, amount: 526 },
+      { min: 200001, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 100001, amount: 263 },
+      { min: 100001, max: INFINITY, amount: 0 },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 200001, amount: 263 },
+      { min: 200001, max: INFINITY, amount: 0 },
     ],
   },
   [STATE_INCOME]: {

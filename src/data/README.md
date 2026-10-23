@@ -299,6 +299,39 @@ Oregon rounded them, so the second step is 6,250, not 80% of 7,800. It is a
 subtraction, not a deduction, so it applies on top of a custom deduction the
 user enters, and city taxes that start from state taxable income see it.
 
+## Personal exemption credit
+
+`personal_exemption_credit` is a nonrefundable credit taken off the state's
+computed income tax — not off income, and not off payroll or local taxes. That
+is what separates it from the personal *exemptions* above, which reduce income
+and live in `standard_deduction`. Oregon's is the only one so far (Form OR-40
+line 25).
+
+Same shape again: an amount per filing status, or bands chosen by the AGI
+proxy. Hold the **total** for the filer: one exemption, two for a joint return.
+Dependents would add one each, but the calculator does not model them. Oregon's
+credit stops entirely once federal AGI is "more than $100,000" ($200,000 for
+joint and head of household), so it is a cliff — and because the limit itself
+still qualifies, the zero band starts one dollar up:
+
+```typescript
+[PERSONAL_EXEMPTION_CREDIT]: {
+  [SINGLE]: [
+    { min: 0,      max: 100001,   amount: 256 },
+    { min: 100001, max: INFINITY, amount: 0 },
+  ],
+  [MARRIED]: [
+    { min: 0,      max: 200001,   amount: 512 },
+    { min: 200001, max: INFINITY, amount: 0 },
+  ],
+  ...
+}
+```
+
+A cliff makes the marginal rate meaningless across it — one dollar over the
+limit costs the whole credit — which the marginal-rate display flags as
+spanning a rate change.
+
 For example a `federal.ts` file might contain part of this object,
 
 ```js

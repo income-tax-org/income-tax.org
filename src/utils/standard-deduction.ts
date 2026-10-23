@@ -2,6 +2,7 @@ import { INFINITY } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
 import {
   FEDERAL_TAX_SUBTRACTION,
+  PERSONAL_EXEMPTION_CREDIT,
   STANDARD_DEDUCTION,
 } from "@/constants/tax_types";
 import type {
@@ -142,6 +143,26 @@ export function federalTaxSubtractionFor(
     return 0;
   }
   return Math.max(0, Math.min(cap, federalIncomeTax));
+}
+
+/**
+ * The credit this jurisdiction takes off its own income tax for the filer's
+ * exemptions, or 0 if it declares none.
+ *
+ * Oregon's (OR-40 line 25) is an amount per exemption that drops to zero once
+ * federal AGI passes a limit -- a cliff, written as bands. The data holds the
+ * total for each filing status: one exemption, or two for a joint return.
+ * Dependents would add more, but the calculator does not model them.
+ */
+export function personalExemptionCreditFor(
+  taxData: TaxData,
+  filingStatus: FilingStatus,
+  income: number,
+): number {
+  const declared = taxData?.[PERSONAL_EXEMPTION_CREDIT] as
+    | StandardDeductionByFilingStatus
+    | undefined;
+  return resolveStandardDeduction(declared?.[filingStatus], income) ?? 0;
 }
 
 /**

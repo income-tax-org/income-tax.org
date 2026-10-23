@@ -17,6 +17,7 @@ import type { FilingStatus } from "@/constants/filing-status";
 import { ALL } from "@/constants/filing-status";
 import {
   federalTaxSubtractionFor,
+  personalExemptionCreditFor,
   standardDeductionFor,
 } from "./standard-deduction";
 import type {
@@ -35,15 +36,14 @@ import {
   DC_PAID_FAMILY_LEAVE,
   EMPLOYEE_PAYROLL_TAX,
   FEDERAL_INCOME,
-  FEDERAL_TAX_SUBTRACTION,
   HI_TEMPORARY_DISABILITY_INSURANCE,
-  MAX_401K_CONTRIBUTION,
   MEDICARE,
   NJ_DISABILITY_INSURANCE,
   NJ_FAMILY_LEAVE_INSURANCE,
   NJ_UNEMPLOYMENT_INSURANCE,
   NJ_WORKFORCE_DEVELOPMENT,
   NONE,
+  NON_TAX_DATA_KEYS,
   NON_WAGE_TAX_TYPES,
   NY_DISABILITY_INSURANCE,
   NY_PAID_FAMILY_LEAVE,
@@ -52,7 +52,6 @@ import {
   OREGON_TRANSIT_TAX,
   RI_TEMPORARY_DISABILITY_INSURANCE,
   SOCIAL_SECURITY,
-  STANDARD_DEDUCTION,
   STATE_INCOME,
   WASHINGTON_CARES_FUND,
 } from "@/constants/tax_types";
@@ -70,12 +69,6 @@ import type { TaxOption } from "./get-tax-options";
 import type { PaycheckFrequency } from "@/constants/paycheck-frequency";
 import { FREQUENCY_TO_PAYCHECKS_PER_YEAR } from "@/constants/paycheck-frequency";
 import type { TaxFrequency } from "@/types";
-
-const nonTaxKeys = [
-  MAX_401K_CONTRIBUTION,
-  STANDARD_DEDUCTION,
-  FEDERAL_TAX_SUBTRACTION,
-];
 
 // Taxes levied on wages rather than on income after deductions.
 //
@@ -162,6 +155,7 @@ export function calculate(
     taxesPerBracket: stateResults,
     taxableIncome: stateTaxableIncome,
     federalTaxSubtraction: stateFederalTaxSubtraction,
+    personalExemptionCredit: statePersonalExemptionCredit,
   } = calculateTaxesPerBracket(
     stateTaxData,
     totalIncome,
@@ -183,6 +177,7 @@ export function calculate(
     federalTaxableIncome,
     stateTaxableIncome,
     stateFederalTaxSubtraction,
+    statePersonalExemptionCredit,
   };
 }
 
@@ -232,10 +227,17 @@ export function calculateTaxesPerBracket(
   taxableIncome: Money;
   /** Dollars of federal tax subtracted; 0 where none is allowed. */
   federalTaxSubtraction: number;
+  /** Dollars of credit taken off this pass's state income tax. */
+  personalExemptionCredit: number;
 } {
   if (!taxData) {
     const taxableIncome = subtract(totalIncome, asCurrency(totalIRA));
-    return { taxesPerBracket: {}, taxableIncome, federalTaxSubtraction: 0 };
+    return {
+      taxesPerBracket: {},
+      taxableIncome,
+      federalTaxSubtraction: 0,
+      personalExemptionCredit: 0,
+    };
   }
 
   // Wages as reported in W-2 boxes 3 and 5, the base for every tax in
@@ -289,7 +291,7 @@ export function calculateTaxesPerBracket(
     if (NON_WAGE_TAX_TYPES.includes(taxType)) {
       return;
     }
-    if (nonTaxKeys.includes(taxType)) {
+    if (NON_TAX_DATA_KEYS.includes(taxType)) {
       return;
     }
     if (exemptions.includes(taxType)) {
@@ -350,6 +352,34 @@ export function calculateTaxesPerBracket(
     taxesPerBracket[taxType] = calculateTaxBracket(incomeBase, brackets);
   });
 
+  // Oregon's exemption credit comes off the state's own income tax: never
+  // below zero, since it is nonrefundable, and never off payroll or local
+  // taxes. Applied before the city pass so that a surcharge levied on the
+  // state's tax would see the tax after credits.
+  let personalExemptionCredit = 0;
+  const stateIncomeTaxBeforeCredits = taxesPerBracket[STATE_INCOME];
+  if (
+    stateIncomeTaxBeforeCredits !== undefined &&
+    stateIncomeTaxBeforeCredits !== EXEMPT
+  ) {
+    const credit = personalExemptionCreditFor(
+      taxData,
+      filingStatus,
+      toUnit(incomeAfterRetirement),
+    );
+    if (credit > 0) {
+      const applied = minimum([
+        stateIncomeTaxBeforeCredits as Money,
+        asCurrency(credit),
+      ]);
+      taxesPerBracket[STATE_INCOME] = subtract(
+        stateIncomeTaxBeforeCredits as Money,
+        applied,
+      );
+      personalExemptionCredit = toUnit(applied);
+    }
+  }
+
   if (deferredCities) {
     const cityTaxes =
       selectedState && selectedCity ? deferredCities[selectedCity] : undefined;
@@ -395,7 +425,12 @@ export function calculateTaxesPerBracket(
     }
   }
 
-  return { taxesPerBracket, taxableIncome, federalTaxSubtraction };
+  return {
+    taxesPerBracket,
+    taxableIncome,
+    federalTaxSubtraction,
+    personalExemptionCredit,
+  };
 }
 
 /**

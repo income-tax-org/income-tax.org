@@ -135,6 +135,11 @@ The core calculation logic is in [src/utils/calculator.ts](./src/utils/calculato
   subtracts the federal income tax, up to an AGI-phased cap, from state
   taxable income — on top of the deduction, and carried into city taxes on
   state taxable income. See [src/data/README.md](./src/data/README.md).
+- **Personal exemption credit**: a state with `personal_exemption_credit`
+  (Oregon) takes a nonrefundable credit off its own income tax only. New
+  config keys like these belong in `NON_TAX_DATA_KEYS` in
+  [tax_types.ts](./src/constants/tax_types.ts), which keeps them out of every
+  list of taxes.
 
 ## Testing
 

@@ -24,6 +24,7 @@ import {
   FEDERAL_TAX_SUBTRACTION,
   MAX_401K_CONTRIBUTION,
   NONE,
+  PERSONAL_EXEMPTION_CREDIT,
   NON_WAGE_TAX_TYPES,
   STANDARD_DEDUCTION,
 } from "@/constants/tax_types";
@@ -87,6 +88,9 @@ const STANDARD_DEDUCTION_NOTE =
 
 const FEDERAL_TAX_SUBTRACTION_NOTE =
   "federal_tax_subtraction_cap: this state lets filers subtract their federal income tax (not FICA) from income before its rates apply, up to this cap, which steps down by income in the same band format as standard_deduction. The subtraction is the smaller of the cap and the federal income tax; Portland and Multnomah County taxes on Oregon taxable income see it too.";
+
+const PERSONAL_EXEMPTION_CREDIT_NOTE =
+  "personal_exemption_credit: a nonrefundable credit taken off this state's income tax (not payroll or local taxes), in the same band format. The amounts are the total for the filer, and spouse when filing jointly; each dependent would add one more exemption but dependents are not modelled. A band dropping to 0 is an AGI limit: one dollar over it loses the whole credit.";
 
 const NOT_WITHHELD_NOTE =
   "withheld_from_wages: false marks taxes listed for reference that a wage earner does not pay: levied on investment income, or paid by the employer. calculate does not charge them.";
@@ -294,6 +298,13 @@ export async function runTaxTables(input: TaxTablesInput, siteUrl: string) {
               FEDERAL_TAX_SUBTRACTION,
             ),
           }),
+          ...(stateData[PERSONAL_EXEMPTION_CREDIT] && {
+            personal_exemption_credit: describeStandardDeduction(
+              stateData,
+              filingStatus,
+              PERSONAL_EXEMPTION_CREDIT,
+            ),
+          }),
           taxes: stateTaxes,
           cities_with_local_taxes: cities,
         }
@@ -305,6 +316,9 @@ export async function runTaxTables(input: TaxTablesInput, siteUrl: string) {
       STANDARD_DEDUCTION_NOTE,
       ...(stateData?.[FEDERAL_TAX_SUBTRACTION]
         ? [FEDERAL_TAX_SUBTRACTION_NOTE]
+        : []),
+      ...(stateData?.[PERSONAL_EXEMPTION_CREDIT]
+        ? [PERSONAL_EXEMPTION_CREDIT_NOTE]
         : []),
       ...(seen.notWithheld ? [NOT_WITHHELD_NOTE] : []),
       "Rates are percentages. Use the calculate tool for dollar amounts at a given income; it applies all of the above.",

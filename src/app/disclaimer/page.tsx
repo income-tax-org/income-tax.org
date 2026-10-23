@@ -6,7 +6,7 @@ import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
 // Update this whenever the disclaimer text below changes. It is deliberately a
 // constant: this page is statically exported, so `new Date()` here would freeze
 // at build time and report every deploy as a change to the disclaimer.
-const LAST_UPDATED = "September 7, 2026";
+const LAST_UPDATED = "October 23, 2026";
 
 export default function Disclaimer() {
   return (
@@ -66,7 +66,10 @@ export default function Disclaimer() {
               <strong>Deductions, not credits.</strong> Tax is computed from
               brackets applied to income after a standard or custom deduction.
               Credits, exemption phase-outs, dependents, and the many
-              state-specific adjustments and add-backs are not modelled.
+              state-specific adjustments and add-backs are not modelled, with
+              two exceptions: Oregon&apos;s subtraction for federal income tax
+              and its personal exemption credit, counted for you and, filing
+              jointly, your spouse.
             </Typography>
             <Typography component="li" variant="body1" paragraph>
               <strong>Whole tax years only.</strong> Rates that change partway

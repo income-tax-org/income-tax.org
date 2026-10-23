@@ -91,6 +91,21 @@ describe("runTaxTables", () => {
     expect(result.state.taxes.federal_tax_subtraction).toBeUndefined();
   });
 
+  it("includes Oregon's exemption credit and explains it", async () => {
+    const result: Json = await tables({ year: "2025", state: "oregon" });
+    expect(result.state.personal_exemption_credit.single).toEqual([
+      { min: 0, max: 100001, amount: 256 },
+      { min: 100001, max: null, amount: 0 },
+    ]);
+    expect(result.state.personal_exemption_credit.married[0].amount).toBe(512);
+    expect(
+      result.how_to_read.some((line: string) =>
+        line.startsWith("personal_exemption_credit"),
+      ),
+    ).toBe(true);
+    expect(result.state.taxes.personal_exemption_credit).toBeUndefined();
+  });
+
   it("labels Eugene's payroll tax a rate on the whole base", async () => {
     const result: Json = await tables({
       year: "2026",

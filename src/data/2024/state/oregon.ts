@@ -17,6 +17,7 @@ import {
   STATE_INCOME,
   SUPPORTIVE_HOUSING_SERVICES,
   OREGON_TRANSIT_TAX,
+  PERSONAL_EXEMPTION_CREDIT,
 } from "@/constants/tax_types";
 import type { TaxData } from "@/types";
 
@@ -78,6 +79,34 @@ export default {
       { min: 270000, max: 280000, amount: 3300 },
       { min: 280000, max: 290000, amount: 1650 },
       { min: 290000, max: INFINITY, amount: 0 },
+    ],
+  },
+  // Exemption credit, verified against the 2024 Form OR-40 instructions
+  // (150-101-040-1, Rev. 12-13-24), line 25 worksheet: "Line 4 times $249",
+  // with the same $100,000 / $200,000 federal AGI limits.
+  // https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2024.pdf
+  //
+  // A nonrefundable credit per exemption, off Oregon income tax only. The
+  // figures below are the total for the filer (and spouse, filing jointly);
+  // dependents would add one exemption each but are not modelled. "More than
+  // $100,000" means $100,000 itself still qualifies, so the cliff band starts
+  // one dollar up, per the half-open band convention.
+  [PERSONAL_EXEMPTION_CREDIT]: {
+    [SINGLE]: [
+      { min: 0, max: 100001, amount: 249 },
+      { min: 100001, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 200001, amount: 498 },
+      { min: 200001, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 100001, amount: 249 },
+      { min: 100001, max: INFINITY, amount: 0 },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 200001, amount: 249 },
+      { min: 200001, max: INFINITY, amount: 0 },
     ],
   },
   [STATE_INCOME]: {

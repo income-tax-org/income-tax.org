@@ -5,9 +5,8 @@ import {
 } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
 import {
-  FEDERAL_TAX_SUBTRACTION,
+  NON_TAX_DATA_KEYS,
   NON_WAGE_TAX_TYPES,
-  STANDARD_DEDUCTION,
   STATE_INCOME,
 } from "@/constants/tax_types";
 import type { BracketSchedule, RateBracket, TaxData } from "@/types";
@@ -48,8 +47,7 @@ type CollectArgs = {
  * levied on wages and so contributes nothing to these figures.
  */
 const NOT_A_TAX = new Set<string>([
-  STANDARD_DEDUCTION,
-  FEDERAL_TAX_SUBTRACTION,
+  ...NON_TAX_DATA_KEYS,
   CITIES,
   ...NON_WAGE_TAX_TYPES,
 ]);

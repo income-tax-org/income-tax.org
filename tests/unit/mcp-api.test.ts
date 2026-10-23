@@ -106,8 +106,11 @@ describe("runCalculate", () => {
       year: "2025",
     });
     expect(oregon.taxable_income.state_federal_tax_subtraction).toBe(8500);
+    // AGI is exactly the $100,000 limit, which still qualifies.
+    expect(oregon.state_credits.personal_exemption).toBe(256);
     const texas = await calc({ income: 100_000, state: "texas" });
     expect(texas.taxable_income.state_federal_tax_subtraction).toBe(0);
+    expect(texas.state_credits.personal_exemption).toBe(0);
   });
 
   it("honours exemptions", async () => {

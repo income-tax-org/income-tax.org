@@ -10,6 +10,24 @@ export const MAX_401K_CONTRIBUTION = "max_401k_contribution";
  * Data, not a tax: excluded wherever tax types are listed.
  */
 export const FEDERAL_TAX_SUBTRACTION = "federal_tax_subtraction";
+/**
+ * A nonrefundable credit taken off the state's computed income tax, by filing
+ * status -- an amount, or bands chosen by income for a credit that ends above
+ * an AGI limit. Oregon's exemption credit is the only one so far (ORS
+ * 316.085). Like the subtraction above it is data, not a tax.
+ */
+export const PERSONAL_EXEMPTION_CREDIT = "personal_exemption_credit";
+
+/**
+ * Keys in a tax-data file that configure the calculation rather than name a
+ * tax: never charged, never offered as an exemption, never drawn as a table.
+ */
+export const NON_TAX_DATA_KEYS: string[] = [
+  STANDARD_DEDUCTION,
+  MAX_401K_CONTRIBUTION,
+  FEDERAL_TAX_SUBTRACTION,
+  PERSONAL_EXEMPTION_CREDIT,
+];
 
 // Federal
 export const FEDERAL_INCOME = "federal_income";

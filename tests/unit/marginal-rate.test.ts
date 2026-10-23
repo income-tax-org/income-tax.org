@@ -82,11 +82,22 @@ describe("getMarginalRate", () => {
     });
 
     it("stays within a sane range", () => {
-      for (const income of [1_000, 25_000, 100_000, 250_000, 1_000_000]) {
+      // Not 100,000: that is exactly Oregon's exemption-credit cliff, tested
+      // on its own below.
+      for (const income of [1_000, 25_000, 90_000, 250_000, 1_000_000]) {
         const { percent } = getMarginalRate(portlandTaxAt, income);
         expect(percent).toBeGreaterThanOrEqual(0);
         expect(percent).toBeLessThan(100);
       }
+    });
+
+    it("flags Oregon's exemption-credit cliff at $100,000", () => {
+      // A single filer loses the whole $256 credit once federal AGI is more
+      // than $100,000, so the next $100 costs far more than $100 of tax. That
+      // is the law, not an error, and the window says it spans a change.
+      const atCliff = getMarginalRate(portlandTaxAt, 100_000);
+      expect(atCliff.spansRateChange).toBe(true);
+      expect(atCliff.percent).toBeGreaterThan(100);
     });
   });
 });

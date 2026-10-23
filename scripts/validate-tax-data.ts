@@ -17,6 +17,7 @@ import {
   ART_TAX,
   FEDERAL_INCOME,
   FEDERAL_TAX_SUBTRACTION,
+  PERSONAL_EXEMPTION_CREDIT,
   MAX_401K_CONTRIBUTION,
   MEDICARE,
   NONE,
@@ -148,6 +149,8 @@ const stateTaxData = Joi.object()
     [STANDARD_DEDUCTION]: standardDeductions,
     // Same shape as a standard deduction: a cap, or bands chosen by income.
     [FEDERAL_TAX_SUBTRACTION]: standardDeductions,
+    // A credit per filing status, in the same shape; bands write an AGI limit.
+    [PERSONAL_EXEMPTION_CREDIT]: standardDeductions,
     [STATE_INCOME]: brackets,
     [CITIES]: Joi.object().optional(),
   })
@@ -475,7 +478,8 @@ async function main() {
       }
       if (
         taxType === STANDARD_DEDUCTION ||
-        taxType === FEDERAL_TAX_SUBTRACTION
+        taxType === FEDERAL_TAX_SUBTRACTION ||
+        taxType === PERSONAL_EXEMPTION_CREDIT
       ) {
         for (const problem of validateDeductionBands(
           `${location}/${taxType}`,

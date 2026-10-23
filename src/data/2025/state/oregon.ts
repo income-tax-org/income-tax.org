@@ -13,6 +13,7 @@ import {
   FEDERAL_TAX_SUBTRACTION,
   OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE,
   OREGON_TRANSIT_TAX,
+  PERSONAL_EXEMPTION_CREDIT,
   PRESCHOOL_FOR_ALL,
   STANDARD_DEDUCTION,
   STATE_INCOME,
@@ -71,6 +72,35 @@ export default {
       { min: 270000, max: 280000, amount: 3400 },
       { min: 280000, max: 290000, amount: 1700 },
       { min: 290000, max: INFINITY, amount: 0 },
+    ],
+  },
+  // Exemption credit, verified against the 2025 Form OR-40 instructions
+  // (150-101-040-1, Rev. 01-29-26), line 25 worksheet: "Line 4 multiplied by
+  // $256", and 0 "If your federal AGI is more than $200,000 ($100,000 if your
+  // filing status is single or married filing separately)".
+  // https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf
+  //
+  // A nonrefundable credit per exemption, off Oregon income tax only. The
+  // figures below are the total for the filer (and spouse, filing jointly);
+  // dependents would add one exemption each but are not modelled. "More than
+  // $100,000" means $100,000 itself still qualifies, so the cliff band starts
+  // one dollar up, per the half-open band convention.
+  [PERSONAL_EXEMPTION_CREDIT]: {
+    [SINGLE]: [
+      { min: 0, max: 100001, amount: 256 },
+      { min: 100001, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 200001, amount: 512 },
+      { min: 200001, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 100001, amount: 256 },
+      { min: 100001, max: INFINITY, amount: 0 },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 200001, amount: 256 },
+      { min: 200001, max: INFINITY, amount: 0 },
     ],
   },
   [STATE_INCOME]: {

@@ -40,6 +40,7 @@ import {
   ART_TAX,
   CITY_INCOME,
   OCCUPATIONAL_TAX,
+  PERSONAL_EXEMPTION_CREDIT,
   PRESCHOOL_FOR_ALL,
   SUPPORTIVE_HOUSING_SERVICES,
 } from "@/constants/tax_types";
@@ -189,13 +190,26 @@ function calculateExpectedTaxes(
   ] as any[];
   const medicareTax = calculateProgressiveTax(ficaWages, medicareBrackets);
 
-  // State Income Tax
+  // State Income Tax, less Oregon's 2025 exemption credit: $256 per
+  // exemption (two filing jointly), but nothing once federal AGI is more than
+  // $100,000 single or separately, $200,000 otherwise. Nonrefundable.
   const stateIncomeBrackets = (oregon2025[STATE_INCOME] as any)?.[
     filingStatus
   ] as any[];
-  const stateIncomeTax = calculateProgressiveTax(
+  const stateIncomeTaxBeforeCredit = calculateProgressiveTax(
     stateTaxableIncome,
     stateIncomeBrackets,
+  );
+  const creditLimit =
+    filingStatus === SINGLE || filingStatus === MARRIED_SEPARATELY
+      ? 100000
+      : 200000;
+  const exemptionCredit =
+    toUnit(incomeAfterIRA) > creditLimit
+      ? 0
+      : 256 * (filingStatus === MARRIED ? 2 : 1);
+  const stateIncomeTax = asCurrency(
+    Math.max(0, toUnit(stateIncomeTaxBeforeCredit) - exemptionCredit),
   );
 
   // Oregon Transit Tax (on gross wages, not income after deductions — Oregon
@@ -2128,6 +2142,113 @@ describe("Calculator Audit Tests", () => {
         "",
       );
       expect(results.stateFederalTaxSubtraction).toBe(0);
+    });
+  });
+
+  describe("Oregon's exemption credit", () => {
+    const withoutCredit = {
+      ...oregon2025,
+      [PERSONAL_EXEMPTION_CREDIT]: undefined,
+    } as TaxData;
+    const run = (
+      data: TaxData,
+      income: number,
+      filingStatus: FilingStatus = SINGLE,
+      ira = 0,
+      exemptTaxes: TaxOption[] = [],
+      city = "",
+    ) =>
+      calculate(
+        federal2025,
+        data,
+        income,
+        filingStatus,
+        ira,
+        undefined,
+        undefined,
+        exemptTaxes,
+        "oregon",
+        city,
+      );
+    const stateIncomeTaxOf = (results: ReturnType<typeof calculate>) =>
+      toUnit(results.stateResults[STATE_INCOME] as Money);
+
+    it("takes $256 off Oregon income tax for a single filer in 2025", () => {
+      const results = run(oregon2025, 50000);
+      expect(results.statePersonalExemptionCredit).toBe(256);
+      expect(stateIncomeTaxOf(results)).toBeCloseTo(
+        stateIncomeTaxOf(run(withoutCredit, 50000)) - 256,
+        2,
+      );
+    });
+
+    it("counts two exemptions on a joint return", () => {
+      expect(
+        run(oregon2025, 150000, MARRIED).statePersonalExemptionCredit,
+      ).toBe(512);
+    });
+
+    // "More than $100,000" ($200,000 for everyone else): the limit itself
+    // still qualifies, and one dollar over loses the whole credit.
+    it.each([
+      [SINGLE, 100000, 256],
+      [SINGLE, 100001, 0],
+      [MARRIED_SEPARATELY, 100001, 0],
+      [MARRIED, 200000, 512],
+      [MARRIED, 200001, 0],
+      [HEAD_OF_HOUSEHOLD, 200000, 256],
+      [HEAD_OF_HOUSEHOLD, 200001, 0],
+    ])("is a cliff: %s at %i gets %i", (filingStatus, income, credit) => {
+      expect(
+        run(oregon2025, income, filingStatus as FilingStatus)
+          .statePersonalExemptionCredit,
+      ).toBe(credit);
+    });
+
+    it("measures the limit after the 401(k) contribution", () => {
+      // AGI is 95,000.
+      expect(
+        run(oregon2025, 105000, SINGLE, 10000).statePersonalExemptionCredit,
+      ).toBe(256);
+    });
+
+    it("is nonrefundable: never takes the tax below zero", () => {
+      const results = run(oregon2025, 3000);
+      expect(stateIncomeTaxOf(results)).toBe(0);
+      expect(results.statePersonalExemptionCredit).toBeLessThan(256);
+      expect(results.statePersonalExemptionCredit).toBe(
+        stateIncomeTaxOf(run(withoutCredit, 3000)),
+      );
+    });
+
+    it("does nothing when the filer is exempt from Oregon income tax", () => {
+      const results = run(oregon2025, 50000, SINGLE, 0, [
+        { title: "", value: STATE_INCOME, scope: STATE_SCOPE, disabled: false },
+      ]);
+      expect(results.stateResults[STATE_INCOME]).toBe(EXEMPT);
+      expect(results.statePersonalExemptionCredit).toBe(0);
+    });
+
+    it("leaves payroll and Portland's taxes alone", () => {
+      const withIt = run(oregon2025, 60000, SINGLE, 0, [], PORTLAND);
+      const without = run(withoutCredit, 60000, SINGLE, 0, [], PORTLAND);
+      // Compared in dollars: equal Money values need not be equal objects.
+      const dollars = (results: TaxResults) =>
+        Object.fromEntries(
+          Object.entries(results).map(([key, value]) => [
+            key,
+            value === EXEMPT ? value : toUnit(value as Money),
+          ]),
+        );
+      expect(toUnit(withIt.stateResults[OREGON_TRANSIT_TAX] as Money)).toBe(
+        toUnit(without.stateResults[OREGON_TRANSIT_TAX] as Money),
+      );
+      expect(dollars(withIt.stateResults[CITIES] as TaxResults)).toEqual(
+        dollars(without.stateResults[CITIES] as TaxResults),
+      );
+      expect(
+        toUnit(without.totalState.amount) - toUnit(withIt.totalState.amount),
+      ).toBeCloseTo(256, 2);
     });
   });
 });
