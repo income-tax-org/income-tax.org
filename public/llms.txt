@@ -1,12 +1,8 @@
 # Income Tax Calculator
 
-> US income tax calculator covering federal, state and city taxes, including local income and payroll taxes most calculators leave out. Everything on the site is also available as JSON and through an MCP server, with no API key.
+> US income tax calculator covering federal, state and city taxes, including local income and payroll taxes most calculators leave out. Everything on the site is also available from a free JSON API, with no API key, and through an MCP server.
 
 The web pages work out their results in the browser with JavaScript, so fetching a calculator page returns no figures. Use the API below instead.
-
-## MCP server
-
-- [MCP endpoint](https://income-tax.org/mcp): Streamable HTTP, no authentication. Tools: `calculate`, `target`, `tax_tables`.
 
 ## JSON API
 
@@ -15,6 +11,12 @@ The web pages work out their results in the browser with JavaScript, so fetching
 - [tax_tables](https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=single): brackets, rates, standard deductions and the 401(k) limit. All optional: `year`, `state` (omit for federal only), `city`, `filing_status`, `tax_types` (comma-separated).
 
 States and cities are snake_case (`new_york`, `new_york_city`). Invalid input returns HTTP 400 with the valid values. Amounts are US dollars per year unless labelled per paycheck.
+
+- [OpenAPI 3.1 spec](https://income-tax.org/openapi.json): all three endpoints, for agent frameworks and ChatGPT GPT Actions.
+
+## MCP server
+
+- [MCP endpoint](https://income-tax.org/mcp): Streamable HTTP, no authentication. The same three endpoints as tools: `calculate`, `target`, `tax_tables`. Use it where you cannot fetch a URL you build yourself.
 
 ## Docs
 

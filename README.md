@@ -22,7 +22,7 @@ Three tools, each available as a plain GET URL and as an MCP tool:
 
 Add `https://income-tax.org/mcp` as a remote MCP server (Streamable HTTP, no auth) in Claude, ChatGPT, or any MCP client.
 
-Full parameter docs are at [income-tax.org/developers](https://income-tax.org/developers/), and a summary for language models at [/llms.txt](https://income-tax.org/llms.txt).
+An OpenAPI 3.1 spec is at [/openapi.json](https://income-tax.org/openapi.json). Full parameter docs are at [income-tax.org/developers](https://income-tax.org/developers/), and a summary for language models at [/llms.txt](https://income-tax.org/llms.txt).
 
 ### GET URLs
 

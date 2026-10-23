@@ -131,33 +131,26 @@ export default function Developers() {
           API &amp; MCP
         </Typography>
         <Typography variant="body1" textAlign="center" sx={{ mb: 5 }}>
-          The calculator is available to AI assistants and scripts as an MCP
-          server and as plain JSON URLs. It runs the same calculation as this
-          site, needs no API key, and is free to use.
+          A free JSON API for AI assistants, agents and scripts, also available
+          as an MCP server. It runs the same calculation as this site and needs
+          no API key.
         </Typography>
 
-        <Section title="MCP server">
-          <Typography variant="body1">
-            Add this URL as a custom connector, or remote MCP server, in Claude,
-            ChatGPT, Cursor or any other MCP client. It uses Streamable HTTP and
-            needs no authentication.
-          </Typography>
-          <CodeBlock>{`${SITE_URL}/mcp`}</CodeBlock>
-          <Typography variant="body1">
-            It provides three tools: <code>calculate</code>, <code>target</code>{" "}
-            and <code>tax_tables</code>, described below.
-          </Typography>
-        </Section>
-
-        <Section title="JSON URLs">
-          <Typography variant="body1">
-            Each tool is also a GET request that returns JSON, for assistants
-            that can fetch a web page but do not support MCP, and for scripts.
-            Lists are comma-separated: <code>exempt_taxes</code> takes{" "}
+        <Section title="JSON API">
+          <Typography variant="body1" paragraph>
+            Three GET endpoints return JSON, described below. Lists are
+            comma-separated: <code>exempt_taxes</code> takes{" "}
             <code>scope:tax</code> pairs such as{" "}
             <code>federal:social_security,city:city_income</code>, and{" "}
             <code>tax_types</code> takes plain keys.
           </Typography>
+          <Typography variant="body1">
+            An OpenAPI 3.1 description of all three is at{" "}
+            <MuiLink href="/openapi.json">/openapi.json</MuiLink>. Import it
+            into a ChatGPT custom GPT as an Action, or into any agent framework
+            that reads OpenAPI, to get typed tools without MCP.
+          </Typography>
+          <CodeBlock>{`${SITE_URL}/openapi.json`}</CodeBlock>
         </Section>
 
         {TOOLS.map((tool) => (
@@ -199,6 +192,21 @@ export default function Developers() {
             </Box>
           </Section>
         ))}
+
+        <Section title="MCP server">
+          <Typography variant="body1">
+            The same three endpoints are MCP tools. Add this URL as a custom
+            connector, or remote MCP server, in Claude, ChatGPT, Cursor or any
+            other MCP client. It uses Streamable HTTP and needs no
+            authentication. Use this where an assistant cannot fetch a URL it
+            builds itself: claude.ai chat, for one.
+          </Typography>
+          <CodeBlock>{`${SITE_URL}/mcp`}</CodeBlock>
+          <Typography variant="body1">
+            Tools: <code>calculate</code>, <code>target</code> and{" "}
+            <code>tax_tables</code>, taking the parameters above.
+          </Typography>
+        </Section>
 
         <Section title="Errors and limits">
           <Typography variant="body1" paragraph>

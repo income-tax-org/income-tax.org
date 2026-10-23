@@ -16,3 +16,12 @@
 
 /*.webmanifest
   Cache-Control: public, max-age=0, must-revalidate
+
+# Machine-readable API descriptions. Browser-based tools (Swagger UI, GPT
+# builders) fetch these cross-origin; revalidate so a deploy shows up at once.
+/openapi.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=0, must-revalidate
+
+/llms.txt
+  Access-Control-Allow-Origin: *

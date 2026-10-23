@@ -103,7 +103,9 @@ limits Functions to those paths.
   it drifts.
 - Discoverability: [/developers](./src/app/developers/page.tsx) documents the
   API (its parameter list is generated from the Zod schemas, so it stays in
-  step) and is the last link, "MCP", in the header and footer.
+  step) and is the last link, "API", in the header and footer.
+  [/openapi.json](./src/app/openapi.json/route.ts) is generated from the same
+  schemas at build time (`src/mcp/openapi.ts`), as a static file.
   [public/llms.txt](./public/llms.txt) summarizes it for language models;
   update it by hand when parameters change.
 - Local run: `npm run build && npm run dev:functions` (serves on :8788).

@@ -43,4 +43,4 @@ export const DEVELOPERS = {
   route: "/developers",
 };
 
-export const DEVELOPERS_SHORT_TITLE = "MCP";
+export const DEVELOPERS_SHORT_TITLE = "API";
