@@ -134,7 +134,7 @@ export function buildOpenApiSpec(siteUrl: string) {
         "Calculate take-home pay",
         "Take-home pay and every federal, state and local tax for an annual gross income, with per-paycheck figures, taxable income, the marginal rate and a per-tax breakdown.",
         calculateInput,
-        "Take-home pay, totals by jurisdiction, taxable income, credits, the marginal rate, a per-tax breakdown, notes, a link to the same result on the site, and `links.tax_tables`: the ready-made /api/tax-tables URL for the brackets behind it.",
+        "Take-home pay, totals by jurisdiction, taxable income, credits, the marginal rate, a per-tax breakdown, notes, a link to the same result on the site, and `links.tax_tables`: the ready-made URL of the static tax-tables file for the brackets behind it.",
       ),
       "/api/target": operation(
         "target",
@@ -146,7 +146,7 @@ export function buildOpenApiSpec(siteUrl: string) {
       "/api/tax-tables": operation(
         "taxTables",
         "Look up tax brackets and rates",
-        "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, for a year, state and optional city. Each schedule is labelled with how it is applied (`kind`) and the income it is charged on (`basis`); `how_to_read` explains both. Use calculate for dollar amounts.",
+        "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, for a year, state and optional city. Each schedule is labelled with how it is applied (`kind`) and the income it is charged on (`basis`); `how_to_read` explains both. Use calculate for dollar amounts. Unfiltered tables (every filing status) are also published as free static files at /data/tax-tables/{year}/{state}/{city}.json, dash-case, e.g. /data/tax-tables/2026/oregon/portland.json; drop /{city} for a state, or both for federal only.",
         taxTablesInput,
         "Schedules by jurisdiction, with how_to_read notes and a link to the site's tax tables.",
       ),

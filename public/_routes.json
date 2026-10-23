@@ -1,5 +1,8 @@
 {
   "version": 1,
-  "include": ["/mcp", "/api/*"],
+  "include": [
+    "/mcp",
+    "/api/*"
+  ],
   "exclude": []
 }

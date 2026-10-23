@@ -61,7 +61,7 @@ const TOOLS = [
     name: "calculate",
     route: "/api/calculate",
     summary:
-      "Take-home pay and every federal, state and local tax for an annual gross income, with per-paycheck figures, taxable income and the marginal rate. links.tax_tables in the response is the tax_tables URL for the same location, ready to fetch.",
+      "Take-home pay and every federal, state and local tax for an annual gross income, with per-paycheck figures, taxable income and the marginal rate. links.tax_tables in the response is the URL of the static tax tables for the same location, ready to fetch.",
     example: "?income=120000&state=new_york&city=new_york_city",
     schema: calculateInput,
   },
@@ -77,7 +77,7 @@ const TOOLS = [
     name: "tax_tables",
     route: "/api/tax-tables",
     summary:
-      "The brackets, rates, standard deductions and 401(k) limit the calculator uses, for a year, state and optional city. Each schedule says how it is applied and what income it is charged on.",
+      "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, for a year, state and optional city. Each schedule says how it is applied and what income it is charged on. Unfiltered tables are also free static files, e.g. /data/tax-tables/2026/oregon/portland.json.",
     example: "?state=oregon&city=portland&filing_status=single",
     schema: taxTablesInput,
   },

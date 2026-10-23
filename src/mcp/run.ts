@@ -31,6 +31,7 @@ import { solveForIncome } from "@/utils/target-income";
 import type { CalculateInput, TargetInput } from "./inputs";
 import { ANNUAL, normalizeKey } from "./inputs";
 import { LATEST_YEAR, TAX_DATA_REGISTRY, YEARS } from "./tax-data-registry";
+import { staticTaxTablesPath } from "./static-tax-tables";
 
 /** A request that is well-formed but names something the data does not have. */
 export class InputError extends Error {
@@ -215,26 +216,21 @@ function pageUrl(siteUrl: string, resolved: Resolved, income: number): string {
 }
 
 /**
- * Where to read the schedules behind a result: the tax_tables API for the
- * same year, location and filing status, and the matching tax-tables page.
+ * Where to read the schedules behind a result: the static tax-tables file for
+ * the same year and location (every filing status, free to fetch and cached
+ * at the edge), and the matching tax-tables page.
  *
  * Spelled out in full rather than left for the caller to build, because some
  * clients -- claude.ai's web fetch, for one -- will only open a URL that has
  * already appeared in something they fetched.
  */
 function taxTableLinks(siteUrl: string, resolved: Resolved) {
-  const query = new URLSearchParams({
-    year: resolved.year,
-    state: resolved.state,
-    ...(resolved.city && { city: resolved.city }),
-    filing_status: resolved.filingStatus,
-  });
   const path = [resolved.year, resolved.state, resolved.city]
     .filter(Boolean)
     .map(snakeToDashCase)
     .join("/");
   return {
-    tax_tables: `${siteUrl}/api/tax-tables?${query}`,
+    tax_tables: `${siteUrl}${staticTaxTablesPath(resolved.year, resolved.state, resolved.city)}`,
     tax_tables_page: `${siteUrl}/tax-tables/${path}/`,
   };
 }

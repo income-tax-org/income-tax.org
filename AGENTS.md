@@ -106,6 +106,11 @@ limits Functions to those paths.
   step) and is the last link, "API", in the header and footer.
   [/openapi.json](./src/app/openapi.json/route.ts) is generated from the same
   schemas at build time (`src/mcp/openapi.ts`), as a static file.
+- Static tax tables: `postbuild` writes every table to
+  `out/data/tax-tables/{year}[/{state}[/{city}]].json`
+  ([scripts/generate-static-tax-tables.ts](./scripts/generate-static-tax-tables.ts)),
+  which `links.tax_tables` points at. Keep them outside `/api/`: that prefix
+  is routed to Functions, so static files there would cost requests.
   [public/llms.txt](./public/llms.txt) summarizes it for language models;
   update it by hand when parameters change.
 - Local run: `npm run build && npm run dev:functions` (serves on :8788).

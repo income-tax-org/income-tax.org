@@ -32,6 +32,8 @@ https://income-tax.org/api/target?take_home=6000&target_period=monthly&state=tex
 https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=single
 ```
 
+Tax tables are also published as free static files, one per location with every filing status: [`/data/tax-tables/2026/oregon/portland.json`](https://income-tax.org/data/tax-tables/2026/oregon/portland.json) (drop the city for a state, or both for federal only). `calculate` and `target` link the right one in `links.tax_tables`.
+
 | Parameter                                | Default     | Notes                                                                                          |
 | ---------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
 | `income`                                 | —           | `calculate` only. Annual gross dollars.                                                        |
