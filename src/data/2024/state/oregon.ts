@@ -10,6 +10,7 @@ import {
 import {
   ART_TAX,
   EMPLOYEE_PAYROLL_TAX,
+  FEDERAL_TAX_SUBTRACTION,
   OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE,
   PRESCHOOL_FOR_ALL,
   STANDARD_DEDUCTION,
@@ -39,6 +40,45 @@ export default {
     [MARRIED]: 5495,
     [MARRIED_SEPARATELY]: 2745,
     [HEAD_OF_HOUSEHOLD]: 4420,
+  },
+  // Federal tax liability subtraction, verified against Table 4 of the 2024
+  // Form OR-40 instructions (150-101-040-1, Rev. 12-13-24): limited to $8,250
+  // ($4,125 if married filing separately), phased out by federal AGI. Head of
+  // household shares the joint rows.
+  // https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2024.pdf
+  [FEDERAL_TAX_SUBTRACTION]: {
+    [SINGLE]: [
+      { min: 0, max: 125000, amount: 8250 },
+      { min: 125000, max: 130000, amount: 6600 },
+      { min: 130000, max: 135000, amount: 4950 },
+      { min: 135000, max: 140000, amount: 3300 },
+      { min: 140000, max: 145000, amount: 1650 },
+      { min: 145000, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 250000, amount: 8250 },
+      { min: 250000, max: 260000, amount: 6600 },
+      { min: 260000, max: 270000, amount: 4950 },
+      { min: 270000, max: 280000, amount: 3300 },
+      { min: 280000, max: 290000, amount: 1650 },
+      { min: 290000, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 125000, amount: 4125 },
+      { min: 125000, max: 130000, amount: 3300 },
+      { min: 130000, max: 135000, amount: 2475 },
+      { min: 135000, max: 140000, amount: 1650 },
+      { min: 140000, max: 145000, amount: 825 },
+      { min: 145000, max: INFINITY, amount: 0 },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 250000, amount: 8250 },
+      { min: 250000, max: 260000, amount: 6600 },
+      { min: 260000, max: 270000, amount: 4950 },
+      { min: 270000, max: 280000, amount: 3300 },
+      { min: 280000, max: 290000, amount: 1650 },
+      { min: 290000, max: INFINITY, amount: 0 },
+    ],
   },
   [STATE_INCOME]: {
     [SINGLE]: [

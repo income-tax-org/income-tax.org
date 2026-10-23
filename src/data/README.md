@@ -269,6 +269,36 @@ itself exactly: the table is the formula evaluated at each step's midpoint. The
 calculator evaluates at the filer's own income, so it can sit up to half a step
 from the printed table — a couple of dollars of tax.
 
+## Federal tax subtraction
+
+`federal_tax_subtraction` is for a state that lets filers subtract the federal
+income tax they owe before its own rates apply. Oregon is the only one so far
+(Form OR-40 line 10). It holds the **cap**, not the subtraction: the calculator
+subtracts the smaller of the cap and the federal income tax it computed —
+federal tax after nonrefundable credits, Form 1040 line 22, never FICA.
+
+The shape is the standard deduction's: a number per filing status, or bands
+chosen by the same AGI proxy. Oregon prints its cap as a stepped table, "at
+least / but less than", which is the half-open band convention exactly, so each
+printed row is one band with no reduce fields:
+
+```typescript
+[FEDERAL_TAX_SUBTRACTION]: {
+  [SINGLE]: [
+    { min: 0,      max: 125000,   amount: 8500 },
+    { min: 125000, max: 130000,   amount: 6800 },
+    ...
+    { min: 145000, max: INFINITY, amount: 0 },
+  ],
+  ...
+}
+```
+
+Transcribe the steps as printed rather than computing them from the cap: in 2023
+Oregon rounded them, so the second step is 6,250, not 80% of 7,800. It is a
+subtraction, not a deduction, so it applies on top of a custom deduction the
+user enters, and city taxes that start from state taxable income see it.
+
 For example a `federal.ts` file might contain part of this object,
 
 ```js

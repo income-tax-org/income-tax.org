@@ -16,6 +16,7 @@ import {
 import {
   ART_TAX,
   FEDERAL_INCOME,
+  FEDERAL_TAX_SUBTRACTION,
   MAX_401K_CONTRIBUTION,
   MEDICARE,
   NONE,
@@ -145,6 +146,8 @@ const federalTaxData = Joi.object().keys({
 const stateTaxData = Joi.object()
   .keys({
     [STANDARD_DEDUCTION]: standardDeductions,
+    // Same shape as a standard deduction: a cap, or bands chosen by income.
+    [FEDERAL_TAX_SUBTRACTION]: standardDeductions,
     [STATE_INCOME]: brackets,
     [CITIES]: Joi.object().optional(),
   })
@@ -470,7 +473,10 @@ async function main() {
       if (taxType === MAX_401K_CONTRIBUTION) {
         continue;
       }
-      if (taxType === STANDARD_DEDUCTION) {
+      if (
+        taxType === STANDARD_DEDUCTION ||
+        taxType === FEDERAL_TAX_SUBTRACTION
+      ) {
         for (const problem of validateDeductionBands(
           `${location}/${taxType}`,
           taxTypeData,

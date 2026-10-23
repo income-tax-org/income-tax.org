@@ -7,6 +7,7 @@ import type { FilingStatus } from "@/constants/filing-status";
 import type { PaycheckFrequency } from "@/constants/paycheck-frequency";
 import { FREQUENCY_TO_PAYCHECKS_PER_YEAR } from "@/constants/paycheck-frequency";
 import {
+  FEDERAL_TAX_SUBTRACTION,
   MAX_401K_CONTRIBUTION,
   NON_WAGE_TAX_TYPES,
   STANDARD_DEDUCTION,
@@ -58,7 +59,12 @@ type Resolved = {
 };
 
 /** Keys in a TaxData object that are settings rather than taxes. */
-export const NON_TAX_KEYS = [STANDARD_DEDUCTION, MAX_401K_CONTRIBUTION, CITIES];
+export const NON_TAX_KEYS = [
+  STANDARD_DEDUCTION,
+  FEDERAL_TAX_SUBTRACTION,
+  MAX_401K_CONTRIBUTION,
+  CITIES,
+];
 
 function exemptableKeys(taxes: Record<string, unknown> | undefined): string[] {
   return Object.keys(taxes ?? {}).filter(
@@ -284,6 +290,9 @@ function describe(resolved: Resolved, income: number, siteUrl: string) {
     taxable_income: {
       federal: toUnit(result.federalTaxableIncome),
       state: toUnit(result.stateTaxableIncome),
+      // Federal income tax a state lets filers subtract before its own rates
+      // apply (Oregon); already taken out of `state`. 0 elsewhere.
+      state_federal_tax_subtraction: result.stateFederalTaxSubtraction,
     },
     marginal_tax_rate_percent: Math.round(marginal.percent * 100) / 100,
     by_tax: {

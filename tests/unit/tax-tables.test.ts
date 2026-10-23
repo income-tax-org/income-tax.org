@@ -72,6 +72,25 @@ describe("runTaxTables", () => {
     ).toBe(true);
   });
 
+  it("includes Oregon's federal tax subtraction cap and explains it", async () => {
+    const result: Json = await tables({
+      year: "2025",
+      state: "oregon",
+      filing_status: "married_separately",
+    });
+    const [first, second] =
+      result.state.federal_tax_subtraction_cap.married_separately;
+    expect(first).toEqual({ min: 0, max: 125000, amount: 4250 });
+    expect(second).toEqual({ min: 125000, max: 130000, amount: 3400 });
+    expect(
+      result.how_to_read.some((line: string) =>
+        line.startsWith("federal_tax_subtraction_cap"),
+      ),
+    ).toBe(true);
+    // Data, not a tax: it must not show up as a schedule.
+    expect(result.state.taxes.federal_tax_subtraction).toBeUndefined();
+  });
+
   it("labels Eugene's payroll tax a rate on the whole base", async () => {
     const result: Json = await tables({
       year: "2026",

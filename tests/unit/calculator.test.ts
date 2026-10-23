@@ -40,11 +40,14 @@ import {
   ART_TAX,
   CITY_INCOME,
   OCCUPATIONAL_TAX,
+  PRESCHOOL_FOR_ALL,
+  SUPPORTIVE_HOUSING_SERVICES,
 } from "@/constants/tax_types";
-import { BIRMINGHAM } from "@/constants/cities";
+import { BIRMINGHAM, PORTLAND } from "@/constants/cities";
 import {
   CITIES,
   CITY_SCOPE,
+  FEDERAL_SCOPE,
   INFINITY,
   STATE_SCOPE,
   TAXABLE_INCOME_BASIS,
@@ -100,6 +103,27 @@ function calculateProgressiveTax(taxableIncome: Money, brackets: any[]): Money {
 }
 
 /**
+ * Oregon's 2025 federal tax liability subtraction cap, from Table 4 of the 2025
+ * Form OR-40 instructions. Written out from the published table rather than
+ * read from the data file, so these tests also check the transcription.
+ */
+function oregon2025FederalSubtractionCap(
+  agi: number,
+  filingStatus: FilingStatus,
+): number {
+  const joint = filingStatus === MARRIED || filingStatus === HEAD_OF_HOUSEHOLD;
+  const cap = filingStatus === MARRIED_SEPARATELY ? 4250 : 8500;
+  const start = joint ? 250000 : 125000;
+  const step = joint ? 10000 : 5000;
+  if (agi < start) {
+    return cap;
+  }
+  // Each step takes another fifth of the cap; the fifth step reaches zero.
+  const steps = Math.min(5, Math.floor((agi - start) / step) + 1);
+  return (cap * (5 - steps)) / 5;
+}
+
+/**
  * Calculate expected taxes independently
  */
 function calculateExpectedTaxes(
@@ -129,7 +153,6 @@ function calculateExpectedTaxes(
     incomeAfterIRA,
     asCurrency(fedDeductions),
   );
-  const stateTaxableIncome = subtract(incomeAfterIRA, asCurrency(stateDeduct));
 
   // Federal Income Tax
   const federalIncomeBrackets = (federal2025[FEDERAL_INCOME] as any)?.[
@@ -138,6 +161,17 @@ function calculateExpectedTaxes(
   const federalIncomeTax = calculateProgressiveTax(
     federalTaxableIncome,
     federalIncomeBrackets,
+  );
+
+  // Oregon subtracts federal income tax, up to the AGI-phased cap, on top of
+  // whatever deduction applies.
+  const federalTaxSubtraction = Math.min(
+    toUnit(federalIncomeTax),
+    oregon2025FederalSubtractionCap(toUnit(incomeAfterIRA), filingStatus),
+  );
+  const stateTaxableIncome = subtract(
+    incomeAfterIRA,
+    asCurrency(stateDeduct + federalTaxSubtraction),
   );
 
   // Social Security (on gross wages, before the deferral and before deductions)
@@ -326,9 +360,13 @@ describe("Calculator Audit Tests", () => {
         customStateDeduction,
       );
 
-      // Should use custom deductions, not standard
+      // Should use custom deductions, not standard. Oregon still subtracts the
+      // federal tax on top of a custom deduction: 10% of 11,925 plus 12% of
+      // the 31,075 above it is 4,921.50, under the $8,500 cap.
       const expectedFederalTaxableIncome = asCurrency(50000 - 5000 - 2000);
-      const expectedStateTaxableIncome = asCurrency(50000 - 5000 - 1000);
+      const expectedStateTaxableIncome = asCurrency(
+        50000 - 5000 - 1000 - 4921.5,
+      );
 
       expect(
         equal(results.federalTaxableIncome, expectedFederalTaxableIncome),
@@ -1961,6 +1999,135 @@ describe("Calculator Audit Tests", () => {
         expect(keys).not.toContain("city:city_income");
         expect(keys).toContain("state:state_income");
       });
+    });
+  });
+
+  describe("Oregon's federal tax liability subtraction", () => {
+    const oregon = (
+      income: number,
+      filingStatus: FilingStatus = SINGLE,
+      ira = 0,
+      exemptTaxes: TaxOption[] = [],
+    ) =>
+      calculate(
+        federal2025,
+        oregon2025,
+        income,
+        filingStatus,
+        ira,
+        undefined,
+        undefined,
+        exemptTaxes,
+        "oregon",
+        "",
+      );
+    const federalIncomeTaxOf = (results: ReturnType<typeof calculate>) =>
+      toUnit(results.federalResults[FEDERAL_INCOME] as Money);
+
+    it("subtracts all of a federal tax smaller than the cap", () => {
+      const results = oregon(40000);
+      expect(federalIncomeTaxOf(results)).toBeLessThan(8500);
+      expect(results.stateFederalTaxSubtraction).toBe(
+        federalIncomeTaxOf(results),
+      );
+      expect(toUnit(results.stateTaxableIncome)).toBe(
+        40000 - 2835 - federalIncomeTaxOf(results),
+      );
+    });
+
+    it("caps it at $8,500 for a single filer in 2025", () => {
+      expect(oregon(100000).stateFederalTaxSubtraction).toBe(8500);
+    });
+
+    // Table 4 rows are "at least / but less than", so each threshold belongs
+    // to the band above it.
+    it.each([
+      [124999, 8500],
+      [125000, 6800],
+      [132000, 5100],
+      [139999, 3400],
+      [144999, 1700],
+      [145000, 0],
+    ])("phases out by AGI: single at %i allows %i", (income, cap) => {
+      expect(oregon(income).stateFederalTaxSubtraction).toBe(cap);
+    });
+
+    it("measures the phase-out after the 401(k) contribution", () => {
+      // AGI is 120,000, below the first step.
+      expect(oregon(130000, SINGLE, 10000).stateFederalTaxSubtraction).toBe(
+        8500,
+      );
+    });
+
+    it("halves the cap for married filing separately", () => {
+      expect(
+        oregon(100000, MARRIED_SEPARATELY).stateFederalTaxSubtraction,
+      ).toBe(4250);
+      expect(
+        oregon(126000, MARRIED_SEPARATELY).stateFederalTaxSubtraction,
+      ).toBe(3400);
+    });
+
+    it("phases out joint and head-of-household filers from $250,000", () => {
+      expect(oregon(249999, MARRIED).stateFederalTaxSubtraction).toBe(8500);
+      expect(oregon(255000, MARRIED).stateFederalTaxSubtraction).toBe(6800);
+      expect(oregon(285000, HEAD_OF_HOUSEHOLD).stateFederalTaxSubtraction).toBe(
+        1700,
+      );
+    });
+
+    it("subtracts nothing when the filer is exempt from federal income tax", () => {
+      const results = oregon(100000, SINGLE, 0, [
+        {
+          title: "",
+          value: FEDERAL_INCOME,
+          scope: FEDERAL_SCOPE,
+          disabled: false,
+        },
+      ]);
+      expect(results.stateFederalTaxSubtraction).toBe(0);
+    });
+
+    // Metro's housing tax and Multnomah County's preschool tax start from
+    // Oregon taxable income, which is after the subtraction. At $135,000 in
+    // 2026 the cap has stepped down to $3,500, so Oregon taxable income is
+    // 135,000 - 2,910 - 3,500 = 128,590.
+    it("carries through to Portland's taxes on Oregon taxable income", () => {
+      const results = calculate(
+        federal2026,
+        oregon2026,
+        135000,
+        SINGLE,
+        0,
+        undefined,
+        undefined,
+        [],
+        "oregon",
+        PORTLAND,
+      );
+      const local = results.stateResults[CITIES] as TaxResults;
+      expect(results.stateFederalTaxSubtraction).toBe(3500);
+      expect(toUnit(results.stateTaxableIncome)).toBe(128590);
+      // 1% of the 590 over Metro's $128,000 threshold.
+      expect(toUnit(local[SUPPORTIVE_HOUSING_SERVICES] as Money)).toBe(5.9);
+      // 1.5% of the 3,590 over the county's $125,000 threshold.
+      expect(toUnit(local[PRESCHOOL_FOR_ALL] as Money)).toBe(53.85);
+    });
+
+    it("does not apply in states without one", () => {
+      const results = calculate(
+        federal2025,
+        newYork2025,
+        100000,
+        SINGLE,
+        0,
+        undefined,
+        undefined,
+        [],
+        "new_york",
+        "",
+      );
+      expect(results.stateFederalTaxSubtraction).toBe(0);
     });
   });
 });

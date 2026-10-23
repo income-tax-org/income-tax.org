@@ -1,6 +1,9 @@
 import { INFINITY } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
-import { STANDARD_DEDUCTION } from "@/constants/tax_types";
+import {
+  FEDERAL_TAX_SUBTRACTION,
+  STANDARD_DEDUCTION,
+} from "@/constants/tax_types";
 import type {
   DeductionBand,
   StandardDeduction,
@@ -113,6 +116,32 @@ export function standardDeductionFor(
     | StandardDeductionByFilingStatus
     | undefined;
   return resolveStandardDeduction(declared?.[filingStatus], income);
+}
+
+/**
+ * How much federal income tax this jurisdiction lets the filer subtract: the
+ * smaller of the tax itself and the declared cap, or 0 if it declares none.
+ *
+ * Oregon's subtraction (OR-40 worksheet) takes federal tax after nonrefundable
+ * credits, Form 1040 line 22 -- what the calculator's federal_income pass
+ * computes, and never FICA. The cap is chosen by federal AGI, so `income` is
+ * the same AGI proxy the standard deduction uses: income after the retirement
+ * contribution.
+ */
+export function federalTaxSubtractionFor(
+  taxData: TaxData,
+  filingStatus: FilingStatus,
+  income: number,
+  federalIncomeTax: number,
+): number {
+  const declared = taxData?.[FEDERAL_TAX_SUBTRACTION] as
+    | StandardDeductionByFilingStatus
+    | undefined;
+  const cap = resolveStandardDeduction(declared?.[filingStatus], income);
+  if (cap === undefined) {
+    return 0;
+  }
+  return Math.max(0, Math.min(cap, federalIncomeTax));
 }
 
 /**

@@ -15,7 +15,10 @@ import {
 } from "./money";
 import type { FilingStatus } from "@/constants/filing-status";
 import { ALL } from "@/constants/filing-status";
-import { standardDeductionFor } from "./standard-deduction";
+import {
+  federalTaxSubtractionFor,
+  standardDeductionFor,
+} from "./standard-deduction";
 import type {
   BracketSchedule,
   FlatFeeBracket,
@@ -31,6 +34,8 @@ import {
   CT_PAID_FAMILY_AND_MEDICAL_LEAVE,
   DC_PAID_FAMILY_LEAVE,
   EMPLOYEE_PAYROLL_TAX,
+  FEDERAL_INCOME,
+  FEDERAL_TAX_SUBTRACTION,
   HI_TEMPORARY_DISABILITY_INSURANCE,
   MAX_401K_CONTRIBUTION,
   MEDICARE,
@@ -66,7 +71,11 @@ import type { PaycheckFrequency } from "@/constants/paycheck-frequency";
 import { FREQUENCY_TO_PAYCHECKS_PER_YEAR } from "@/constants/paycheck-frequency";
 import type { TaxFrequency } from "@/types";
 
-const nonTaxKeys = [MAX_401K_CONTRIBUTION, STANDARD_DEDUCTION];
+const nonTaxKeys = [
+  MAX_401K_CONTRIBUTION,
+  STANDARD_DEDUCTION,
+  FEDERAL_TAX_SUBTRACTION,
+];
 
 // Taxes levied on wages rather than on income after deductions.
 //
@@ -149,22 +158,32 @@ export function calculate(
     exemptions,
   );
 
-  const { taxesPerBracket: stateResults, taxableIncome: stateTaxableIncome } =
-    calculateTaxesPerBracket(
-      stateTaxData,
-      totalIncome,
-      filingStatus,
-      totalIRA,
-      totalStateDeductions,
-      exemptions,
-      selectedState,
-      selectedCity,
-      cityExemptions,
-    );
+  const {
+    taxesPerBracket: stateResults,
+    taxableIncome: stateTaxableIncome,
+    federalTaxSubtraction: stateFederalTaxSubtraction,
+  } = calculateTaxesPerBracket(
+    stateTaxData,
+    totalIncome,
+    filingStatus,
+    totalIRA,
+    totalStateDeductions,
+    exemptions,
+    selectedState,
+    selectedCity,
+    cityExemptions,
+    ZERO,
+    computedTaxOrZero(federalResults[FEDERAL_INCOME]),
+  );
 
   const totals = sumTotals(totalIncome, federalResults, stateResults, totalIRA);
 
-  return { ...totals, federalTaxableIncome, stateTaxableIncome };
+  return {
+    ...totals,
+    federalTaxableIncome,
+    stateTaxableIncome,
+    stateFederalTaxSubtraction,
+  };
 }
 
 /**
@@ -203,10 +222,20 @@ export function calculateTaxesPerBracket(
    * than on income. Only the city pass receives this; see the CITIES branch.
    */
   stateIncomeTax: Money = ZERO,
-): { taxesPerBracket: TaxResultsWithCities; taxableIncome: Money } {
+  /**
+   * The federal income tax already computed, for a state that lets filers
+   * subtract it (FEDERAL_TAX_SUBTRACTION). Only the state pass receives this.
+   */
+  federalIncomeTax: Money = ZERO,
+): {
+  taxesPerBracket: TaxResultsWithCities;
+  taxableIncome: Money;
+  /** Dollars of federal tax subtracted; 0 where none is allowed. */
+  federalTaxSubtraction: number;
+} {
   if (!taxData) {
     const taxableIncome = subtract(totalIncome, asCurrency(totalIRA));
-    return { taxesPerBracket: {}, taxableIncome };
+    return { taxesPerBracket: {}, taxableIncome, federalTaxSubtraction: 0 };
   }
 
   // Wages as reported in W-2 boxes 3 and 5, the base for every tax in
@@ -233,10 +262,20 @@ export function calculateTaxesPerBracket(
     );
   }
 
+  // Oregon lets filers subtract federal income tax, up to a cap that phases
+  // out with AGI. It is a subtraction from income rather than a deduction, so
+  // it applies on top of an itemized figure the user enters, not instead of it.
+  const federalTaxSubtraction = federalTaxSubtractionFor(
+    taxData,
+    filingStatus,
+    toUnit(incomeAfterRetirement),
+    toUnit(federalIncomeTax),
+  );
+
   // Taxable income after deductions (used for income taxes)
   const taxableIncome = subtract(
     incomeAfterRetirement,
-    asCurrency(deductions || 0),
+    asCurrency((deductions || 0) + federalTaxSubtraction),
   );
 
   const taxesPerBracket = {} as TaxResultsWithCities;
@@ -319,14 +358,16 @@ export function calculateTaxesPerBracket(
       // it; passing `undefined` lets the recursive call run its own lookup.
       // Every city in the data today declares none and so starts from the
       // state's already-resolved figure, which is right for the city and
-      // county income taxes that begin at state taxable income.
+      // county income taxes that begin at state taxable income. That figure
+      // includes the federal tax subtraction: Portland's and Multnomah
+      // County's taxes start from Oregon taxable income, which is after it.
       const cityDeductions =
         standardDeductionFor(
           cityTaxes,
           filingStatus,
           toUnit(incomeAfterRetirement),
         ) === undefined
-          ? deductions
+          ? (deductions || 0) + federalTaxSubtraction
           : undefined;
 
       // Recursing rather than looping is what gives a city's taxes the same
@@ -354,7 +395,7 @@ export function calculateTaxesPerBracket(
     }
   }
 
-  return { taxesPerBracket, taxableIncome };
+  return { taxesPerBracket, taxableIncome, federalTaxSubtraction };
 }
 
 /**

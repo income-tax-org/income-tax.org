@@ -5,6 +5,7 @@ import {
 } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
 import {
+  FEDERAL_TAX_SUBTRACTION,
   NON_WAGE_TAX_TYPES,
   STANDARD_DEDUCTION,
   STATE_INCOME,
@@ -48,6 +49,7 @@ type CollectArgs = {
  */
 const NOT_A_TAX = new Set<string>([
   STANDARD_DEDUCTION,
+  FEDERAL_TAX_SUBTRACTION,
   CITIES,
   ...NON_WAGE_TAX_TYPES,
 ]);

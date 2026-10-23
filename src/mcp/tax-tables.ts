@@ -21,6 +21,7 @@ import {
 import { ALL } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
 import {
+  FEDERAL_TAX_SUBTRACTION,
   MAX_401K_CONTRIBUTION,
   NONE,
   NON_WAGE_TAX_TYPES,
@@ -83,6 +84,9 @@ const BASIS_NOTES: Record<string, string> = {
 
 const STANDARD_DEDUCTION_NOTE =
   "standard_deduction is a dollar amount per filing status, or, where it phases out with income, a list of bands: within [min, max) the deduction starts at amount and falls by reduce_rate percent of income above reduce_from (default min), or by reduce_by per whole reduce_per; percent_of_income bands are a percentage of income instead; the result never goes below floor.";
+
+const FEDERAL_TAX_SUBTRACTION_NOTE =
+  "federal_tax_subtraction_cap: this state lets filers subtract their federal income tax (not FICA) from income before its rates apply, up to this cap, which steps down by income in the same band format as standard_deduction. The subtraction is the smaller of the cap and the federal income tax; Portland and Multnomah County taxes on Oregon taxable income see it too.";
 
 const NOT_WITHHELD_NOTE =
   "withheld_from_wages: false marks taxes listed for reference that a wage earner does not pay: levied on investment income, or paid by the employer. calculate does not charge them.";
@@ -204,8 +208,9 @@ function describeBand(band: DeductionBand) {
 function describeStandardDeduction(
   taxData: TaxData | undefined,
   filingStatus: FilingStatus | undefined,
+  key: string = STANDARD_DEDUCTION,
 ) {
-  const deduction = taxData?.[STANDARD_DEDUCTION] as
+  const deduction = taxData?.[key] as
     | StandardDeductionByFilingStatus
     | undefined;
   if (!deduction) return null;
@@ -280,6 +285,15 @@ export async function runTaxTables(input: TaxTablesInput, siteUrl: string) {
             stateData,
             filingStatus,
           ),
+          // Same shape as the standard deduction, but a cap: the subtraction
+          // is the smaller of this and the federal income tax.
+          ...(stateData[FEDERAL_TAX_SUBTRACTION] && {
+            federal_tax_subtraction_cap: describeStandardDeduction(
+              stateData,
+              filingStatus,
+              FEDERAL_TAX_SUBTRACTION,
+            ),
+          }),
           taxes: stateTaxes,
           cities_with_local_taxes: cities,
         }
@@ -289,6 +303,9 @@ export async function runTaxTables(input: TaxTablesInput, siteUrl: string) {
       ...[...seen.kinds].map((kind) => `${kind}: ${KIND_NOTES[kind]}`),
       ...[...seen.bases].map((basis) => `basis ${BASIS_NOTES[basis]}`),
       STANDARD_DEDUCTION_NOTE,
+      ...(stateData?.[FEDERAL_TAX_SUBTRACTION]
+        ? [FEDERAL_TAX_SUBTRACTION_NOTE]
+        : []),
       ...(seen.notWithheld ? [NOT_WITHHELD_NOTE] : []),
       "Rates are percentages. Use the calculate tool for dollar amounts at a given income; it applies all of the above.",
     ],

@@ -131,6 +131,10 @@ The core calculation logic is in [src/utils/calculator.ts](./src/utils/calculato
   do flat-fee thresholds that do not declare `basis: "taxable"`.
 - **Progressive brackets** are calculated separately for federal/state/city
 - **Standard deductions** are applied when custom deductions aren't provided
+- **Federal tax subtraction**: a state with `federal_tax_subtraction` (Oregon)
+  subtracts the federal income tax, up to an AGI-phased cap, from state
+  taxable income — on top of the deduction, and carried into city taxes on
+  state taxable income. See [src/data/README.md](./src/data/README.md).
 
 ## Testing
 

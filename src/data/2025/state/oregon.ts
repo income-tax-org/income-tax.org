@@ -10,6 +10,7 @@ import {
 import {
   ART_TAX,
   EMPLOYEE_PAYROLL_TAX,
+  FEDERAL_TAX_SUBTRACTION,
   OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE,
   OREGON_TRANSIT_TAX,
   PRESCHOOL_FOR_ALL,
@@ -31,6 +32,46 @@ export default {
     [MARRIED]: 5670,
     [MARRIED_SEPARATELY]: 2835,
     [HEAD_OF_HOUSEHOLD]: 4560,
+  },
+  // Federal tax liability subtraction, verified against Table 4 of the 2025
+  // Form OR-40 instructions (150-101-040-1, Rev. 01-29-26): "limited to
+  // $8,500 ($4,250 if married filing separately) and is further limited by
+  // your AGI". The subtraction is federal tax after nonrefundable credits
+  // (Form 1040 line 22), never FICA. Head of household shares the joint rows.
+  // https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf
+  [FEDERAL_TAX_SUBTRACTION]: {
+    [SINGLE]: [
+      { min: 0, max: 125000, amount: 8500 },
+      { min: 125000, max: 130000, amount: 6800 },
+      { min: 130000, max: 135000, amount: 5100 },
+      { min: 135000, max: 140000, amount: 3400 },
+      { min: 140000, max: 145000, amount: 1700 },
+      { min: 145000, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 250000, amount: 8500 },
+      { min: 250000, max: 260000, amount: 6800 },
+      { min: 260000, max: 270000, amount: 5100 },
+      { min: 270000, max: 280000, amount: 3400 },
+      { min: 280000, max: 290000, amount: 1700 },
+      { min: 290000, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 125000, amount: 4250 },
+      { min: 125000, max: 130000, amount: 3400 },
+      { min: 130000, max: 135000, amount: 2550 },
+      { min: 135000, max: 140000, amount: 1700 },
+      { min: 140000, max: 145000, amount: 850 },
+      { min: 145000, max: INFINITY, amount: 0 },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 250000, amount: 8500 },
+      { min: 250000, max: 260000, amount: 6800 },
+      { min: 260000, max: 270000, amount: 5100 },
+      { min: 270000, max: 280000, amount: 3400 },
+      { min: 280000, max: 290000, amount: 1700 },
+      { min: 290000, max: INFINITY, amount: 0 },
+    ],
   },
   [STATE_INCOME]: {
     [SINGLE]: [

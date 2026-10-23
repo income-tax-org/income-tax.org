@@ -10,6 +10,7 @@ import {
 import {
   ART_TAX,
   EMPLOYEE_PAYROLL_TAX,
+  FEDERAL_TAX_SUBTRACTION,
   OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE,
   OREGON_TRANSIT_TAX,
   PRESCHOOL_FOR_ALL,
@@ -40,6 +41,54 @@ export default {
     [MARRIED]: 5820,
     [MARRIED_SEPARATELY]: 2910,
     [HEAD_OF_HOUSEHOLD]: 4680,
+  },
+  // Federal tax liability subtraction. SINGLE, MARRIED and HEAD_OF_HOUSEHOLD
+  // verified 2026-10-23: the 2026 withholding tax formulas (150-206-436,
+  // Rev. 12-31-25) print the [S] and [M] phase-out rows below ("wages >=
+  // $125,000 and <$130,000 = $7,000" ... "wages >= $290,000 = $0"), and
+  // Publication OR-ESTIMATE 2026 (150-101-026, Rev. 10-07-25) gives "Federal
+  // tax subtraction: $0 to $8,750". The AGI thresholds are statutory and have
+  // not moved since 2023. Head of household takes the joint rows, as it does
+  // on every published OR-40 Table 4.
+  // https://www.oregon.gov/dor/forms/FormsPubs/withholding-tax-formulas_206-436_2026.pdf
+  // UNSOURCED: MARRIED_SEPARATELY. Withholding has no separate-return table
+  // and the 2026 OR-40 instructions are not published. 4,375 is half the cap,
+  // which is exactly what Table 4 printed in 2023, 2024 and 2025, with the
+  // same 80/60/40/20% steps. Re-check against Table 4 when 2026 OR-40
+  // instructions publish.
+  [FEDERAL_TAX_SUBTRACTION]: {
+    [SINGLE]: [
+      { min: 0, max: 125000, amount: 8750 },
+      { min: 125000, max: 130000, amount: 7000 },
+      { min: 130000, max: 135000, amount: 5250 },
+      { min: 135000, max: 140000, amount: 3500 },
+      { min: 140000, max: 145000, amount: 1750 },
+      { min: 145000, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 250000, amount: 8750 },
+      { min: 250000, max: 260000, amount: 7000 },
+      { min: 260000, max: 270000, amount: 5250 },
+      { min: 270000, max: 280000, amount: 3500 },
+      { min: 280000, max: 290000, amount: 1750 },
+      { min: 290000, max: INFINITY, amount: 0 },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 125000, amount: 4375 },
+      { min: 125000, max: 130000, amount: 3500 },
+      { min: 130000, max: 135000, amount: 2625 },
+      { min: 135000, max: 140000, amount: 1750 },
+      { min: 140000, max: 145000, amount: 875 },
+      { min: 145000, max: INFINITY, amount: 0 },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 250000, amount: 8750 },
+      { min: 250000, max: 260000, amount: 7000 },
+      { min: 260000, max: 270000, amount: 5250 },
+      { min: 270000, max: 280000, amount: 3500 },
+      { min: 280000, max: 290000, amount: 1750 },
+      { min: 290000, max: INFINITY, amount: 0 },
+    ],
   },
   [STATE_INCOME]: {
     [SINGLE]: [

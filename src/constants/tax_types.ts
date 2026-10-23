@@ -2,6 +2,14 @@
 export const NONE = "none"; // No tax (e.g. states with no income)
 export const STANDARD_DEDUCTION = "standard_deduction";
 export const MAX_401K_CONTRIBUTION = "max_401k_contribution";
+/**
+ * The most federal income tax a state lets filers subtract from income, by
+ * filing status -- a dollar cap, or bands that shrink it as income rises.
+ * The subtraction is the smaller of the cap and the federal income tax the
+ * calculator computed. Oregon's is the only one so far (ORS 316.680/316.695).
+ * Data, not a tax: excluded wherever tax types are listed.
+ */
+export const FEDERAL_TAX_SUBTRACTION = "federal_tax_subtraction";
 
 // Federal
 export const FEDERAL_INCOME = "federal_income";

@@ -2,6 +2,7 @@ import type { FilingStatus } from "../constants/filing-status";
 import type { ALL } from "../constants/filing-status";
 import type {
   FEDERAL_INCOME,
+  FEDERAL_TAX_SUBTRACTION,
   MAX_401K_CONTRIBUTION,
   NONE,
   STANDARD_DEDUCTION,
@@ -161,6 +162,12 @@ export type BracketsByFilingStatus =
 export interface TaxData {
   [MAX_401K_CONTRIBUTION]?: number;
   [STANDARD_DEDUCTION]?: StandardDeductionByFilingStatus;
+  /**
+   * Cap on the federal income tax a state lets filers subtract. Same shape as
+   * a standard deduction: a number, or bands chosen by income. Oregon's
+   * published table is stepped, so its bands carry no reduction fields.
+   */
+  [FEDERAL_TAX_SUBTRACTION]?: StandardDeductionByFilingStatus;
   [FEDERAL_INCOME]?: BracketsByFilingStatus;
   [STATE_INCOME]?: BracketsByFilingStatus | typeof NONE;
   [CITIES]?: {

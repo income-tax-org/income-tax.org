@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { cityTaxKey, snakeToTitleCase } from "./string-utils";
 import {
+  FEDERAL_TAX_SUBTRACTION,
   MAX_401K_CONTRIBUTION,
   NON_WAGE_TAX_TYPES,
   STANDARD_DEDUCTION,
@@ -106,7 +107,7 @@ export function useGetTaxOptions({
       };
     });
     const state = Object.entries(stateTaxes || {}).map(([key, value]) => {
-      if (key === STANDARD_DEDUCTION) {
+      if (key === STANDARD_DEDUCTION || key === FEDERAL_TAX_SUBTRACTION) {
         return null;
       }
       if (key === CITIES) {

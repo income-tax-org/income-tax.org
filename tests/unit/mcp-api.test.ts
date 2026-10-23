@@ -99,6 +99,17 @@ describe("runCalculate", () => {
     expect(withIt.totals.fica.annual).toBe(without.totals.fica.annual);
   });
 
+  it("reports Oregon's federal tax subtraction", async () => {
+    const oregon = await calc({
+      income: 100_000,
+      state: "oregon",
+      year: "2025",
+    });
+    expect(oregon.taxable_income.state_federal_tax_subtraction).toBe(8500);
+    const texas = await calc({ income: 100_000, state: "texas" });
+    expect(texas.taxable_income.state_federal_tax_subtraction).toBe(0);
+  });
+
   it("honours exemptions", async () => {
     const result = await calc({
       income: 100_000,
