@@ -324,10 +324,10 @@ export default function TaxTables({
     USAState,
   ]);
 
-  const { tables, isShowingDefault } = useMemo(() => {
+  const tables = useMemo(() => {
     const selected = taxTables.concat(taxDataTables);
     if (selected.length > 0) {
-      return { tables: selected, isShowingDefault: false };
+      return selected;
     }
     // With nothing selected this page rendered four empty inputs and a
     // footer. Federal income brackets exist for every year, so show those
@@ -335,12 +335,9 @@ export default function TaxTables({
     // page is a poor landing for a route whose purpose is reference content.
     const federalIncome = federalTaxes?.[FEDERAL_INCOME];
     if (federalIncome) {
-      return {
-        tables: [tableDataFromTaxData(FEDERAL_INCOME, federalIncome)],
-        isShowingDefault: true,
-      };
+      return [tableDataFromTaxData(FEDERAL_INCOME, federalIncome)];
     }
-    return { tables: selected, isShowingDefault: false };
+    return selected;
   }, [taxTables, taxDataTables, federalTaxes]);
 
   return (
@@ -401,14 +398,6 @@ export default function TaxTables({
           />
         </Grid>
         <Grid container spacing={2} columns={12} sx={{ mt: 3 }}>
-          {isShowingDefault ? (
-            <Grid item xs={12}>
-              <Typography variant="body2" color="text.secondary">
-                Showing federal income tax brackets. Pick a state, or choose
-                from the menus above, to see more.
-              </Typography>
-            </Grid>
-          ) : null}
           {tables.map((table, index) => (
             <Grid item xs={12} key={index}>
               {RenderTable(table)}
