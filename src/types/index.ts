@@ -3,10 +3,12 @@ import type { ALL } from "../constants/filing-status";
 import type {
   FEDERAL_INCOME,
   FEDERAL_TAX_SUBTRACTION,
+  LOCAL_SALES_TAX,
   MAX_401K_CONTRIBUTION,
   NONE,
   STANDARD_DEDUCTION,
   STATE_INCOME,
+  STATE_SALES_TAX,
 } from "../constants/tax_types";
 import type { CITIES, EXEMPT, INFINITY } from "../constants";
 import type { Money } from "@/utils/money";
@@ -208,4 +210,45 @@ export type NavPage = {
   icon: ReactElement;
   route: string;
   selected: boolean;
+};
+
+/**
+ * A sales tax rate in percent, as a single number when it held all year or as
+ * the rate for each calendar quarter when it changed. Quarters are the only
+ * granularity needed: Washington lets a local rate change take effect only on
+ * the first day of a quarter (RCW 82.14.055).
+ */
+export type SalesTaxRate = number | [number, number, number, number];
+
+/**
+ * One state's general sales tax for one year, in
+ * src/data/{year}/sales-tax/state/{state}.ts. Separate from TaxData because
+ * it is charged on spending, not income, and the income calculator never
+ * reads it.
+ */
+export interface SalesTaxData {
+  [STATE_SALES_TAX]: SalesTaxRate;
+  /** Used for a location with no city picked, or a city not listed. */
+  [LOCAL_SALES_TAX]: SalesTaxRate;
+  [CITIES]?: { [city: string]: { [LOCAL_SALES_TAX]: SalesTaxRate } };
+}
+
+/**
+ * One row of the IRS Optional State Sales Tax Table: the sales tax the IRS
+ * estimates a household pays at this income, by family size.
+ */
+export type SalesTaxTableBand = {
+  min: number;
+  max: number | typeof INFINITY;
+  /** Family sizes 1 through 5, then "over 5", as the table prints them. */
+  amounts: [number, number, number, number, number, number];
+};
+
+/**
+ * The IRS table the default taxable spending is derived from: the table's
+ * amounts divided by the state rate it was computed at.
+ */
+export type TaxableSpendingTable = {
+  rate: number;
+  bands: SalesTaxTableBand[];
 };

@@ -1,10 +1,11 @@
 import { CITIES } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
-import type { TaxData } from "@/types";
+import type { SalesTaxData, TaxData } from "@/types";
 import { calculate } from "./calculator";
 import { standardDeductionFor } from "./standard-deduction";
 import type { Money } from "./money";
-import { toUnit } from "./money";
+import { subtract, toUnit } from "./money";
+import { estimateSalesTax } from "./sales-tax";
 
 /** A place to compare: a state, optionally narrowed to one of its cities. */
 export type ComparedLocation = {
@@ -22,6 +23,15 @@ export type ComparisonRow = {
   totalTaxes: Money;
   /** Of gross income, 0-100. */
   effectiveRate: number;
+  /**
+   * Estimated sales tax on the year's taxable spending. Null when sales tax
+   * is not being compared, or there is no sales tax data for the state.
+   */
+  salesTax: Money | null;
+  /** Combined rate actually charged over the year, 0-100. */
+  salesTaxRate: number;
+  /** Take home less sales tax: what the ranking uses. */
+  leftOver: Money;
   /** Dollars behind the best location in the set; 0 for the winner. */
   behindLeaderBy: number;
   federalResults: ReturnType<typeof calculate>["federalResults"];
@@ -67,10 +77,21 @@ type BuildArgs = {
   totalIRA: number;
   /** Federal deductions are the same wherever you live. */
   federalDeductions: number | undefined;
+  /**
+   * Set to compare sales tax too. `dataByState` holds null for a state with
+   * no sales tax data yet, which is charged nothing and flagged by the
+   * row's null `salesTax`.
+   */
+  salesTax?: {
+    spending: number;
+    year: number;
+    dataByState: Record<string, SalesTaxData | null>;
+  };
 };
 
 /**
- * Run the same calculation once per location and rank by take-home.
+ * Run the same calculation once per location and rank by take-home -- less
+ * sales tax, when that is being compared.
  *
  * State deductions are deliberately not a parameter: see
  * standardStateDeduction above.
@@ -83,6 +104,7 @@ export function buildComparison({
   filingStatus,
   totalIRA,
   federalDeductions,
+  salesTax,
 }: BuildArgs): ComparisonRow[] {
   const rows = locations.flatMap((location) => {
     const stateTaxes = stateTaxesByState[location.state];
@@ -105,15 +127,31 @@ export function buildComparison({
       location.city,
     );
 
+    const salesTaxData = salesTax?.dataByState[location.state];
+    const salesTaxEstimate = salesTaxData
+      ? estimateSalesTax(
+          salesTaxData,
+          location.city,
+          salesTax.spending,
+          salesTax.year,
+        )
+      : null;
+    const takeHome = result.takeHome.amount;
+
     return [
       {
         location,
         id: locationId(location),
         label: "",
-        takeHome: result.takeHome.amount,
+        takeHome,
         totalTaxes: result.totalTaxes,
         effectiveRate:
           income > 0 ? (toUnit(result.totalTaxes) / income) * 100 : 0,
+        salesTax: salesTaxEstimate?.tax ?? null,
+        salesTaxRate: salesTaxEstimate?.effectiveRate ?? 0,
+        leftOver: salesTaxEstimate
+          ? subtract(takeHome, salesTaxEstimate.tax)
+          : takeHome,
         behindLeaderBy: 0,
         federalResults: result.federalResults,
         stateResults: result.stateResults,
@@ -121,11 +159,11 @@ export function buildComparison({
     ];
   });
 
-  rows.sort((a, b) => toUnit(b.takeHome) - toUnit(a.takeHome));
+  rows.sort((a, b) => toUnit(b.leftOver) - toUnit(a.leftOver));
 
-  const leader = rows.length ? toUnit(rows[0].takeHome) : 0;
+  const leader = rows.length ? toUnit(rows[0].leftOver) : 0;
   return rows.map((row) => ({
     ...row,
-    behindLeaderBy: leader - toUnit(row.takeHome),
+    behindLeaderBy: leader - toUnit(row.leftOver),
   }));
 }

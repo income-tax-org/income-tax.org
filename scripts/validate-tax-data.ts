@@ -24,8 +24,12 @@ import {
   SOCIAL_SECURITY,
   STANDARD_DEDUCTION,
   STATE_INCOME,
+  LOCAL_SALES_TAX,
+  STATE_SALES_TAX,
 } from "@/constants/tax_types";
 import { ALL_STATES } from "@/constants/states";
+import { promises as fs } from "fs";
+import path from "path";
 import { readTaxDataFromDisk } from "@/utils/read-tax-data";
 import { resolveStandardDeduction } from "@/utils/standard-deduction";
 import Joi from "joi";
@@ -463,6 +467,138 @@ function validateIncomeTaxSchedule(
   return problems;
 }
 
+// Sales tax. See src/data/README.md. A rate is a percent: one number, or four
+// quarterly ones when it changed during the year.
+const salesTaxPercent = Joi.number().min(0).max(15);
+const salesTaxRate = Joi.alternatives(
+  salesTaxPercent,
+  Joi.array().items(salesTaxPercent).length(4),
+);
+
+const salesTaxSchema = Joi.object().keys({
+  [STATE_SALES_TAX]: salesTaxRate.required(),
+  [LOCAL_SALES_TAX]: salesTaxRate.required(),
+  [CITIES]: Joi.object()
+    .pattern(
+      Joi.string().pattern(isSnakeCaseRegex),
+      Joi.object().keys({ [LOCAL_SALES_TAX]: salesTaxRate.required() }),
+    )
+    .optional(),
+});
+
+const taxableSpendingSchema = Joi.object().keys({
+  rate: Joi.number().greater(0).max(15).required(),
+  bands: Joi.array()
+    .items(
+      Joi.object().keys({
+        min: Joi.number().integer().min(0).required(),
+        max: max.required(),
+        amounts: Joi.array()
+          .items(Joi.number().integer().min(0))
+          .length(6)
+          .required(),
+      }),
+    )
+    .min(1)
+    .required(),
+});
+
+/** Problems Joi cannot see: shape-valid data that is still written wrong. */
+function salesTaxProblems(where: string, data: any): string[] {
+  const problems: string[] = [];
+  const rates: [string, unknown][] = [
+    [`${where}/${STATE_SALES_TAX}`, data?.[STATE_SALES_TAX]],
+    [`${where}/${LOCAL_SALES_TAX}`, data?.[LOCAL_SALES_TAX]],
+    ...Object.entries<any>(data?.[CITIES] ?? {}).map(
+      ([city, cityData]) =>
+        [`${where}/${city}`, cityData?.[LOCAL_SALES_TAX]] as [string, unknown],
+    ),
+  ];
+  for (const [at, rate] of rates) {
+    // A rate that held all year is written once, so a quarterly array in the
+    // file always means the rate changed.
+    if (Array.isArray(rate) && rate.every((r) => r === rate[0])) {
+      problems.push(`${at}: four equal quarterly rates; write ${rate[0]}`);
+    }
+  }
+  return problems;
+}
+
+function taxableSpendingProblems(where: string, table: any): string[] {
+  const problems: string[] = [];
+  const bands: any[] = table?.bands ?? [];
+  if (bands[0]?.min !== 0)
+    problems.push(`${where}: first band must start at 0`);
+  if (bands[bands.length - 1]?.max !== INFINITY) {
+    problems.push(`${where}: last band must end at INFINITY`);
+  }
+  bands.forEach((band, i) => {
+    if (i > 0 && band.min !== bands[i - 1].max) {
+      problems.push(
+        `${where}: band ${i} starts at ${band.min}, not ${bands[i - 1].max}`,
+      );
+    }
+    // More income, or a bigger family, never spends less in the IRS table.
+    band.amounts?.forEach((amount: number, size: number) => {
+      if (size > 0 && amount < band.amounts[size - 1]) {
+        problems.push(`${where}: band ${i} falls with family size`);
+      }
+      if (i > 0 && amount < bands[i - 1].amounts?.[size]) {
+        problems.push(`${where}: band ${i} falls with income`);
+      }
+    });
+  });
+  return problems;
+}
+
+async function validateSalesTax(dataDirectory: string): Promise<string[]> {
+  const problems: string[] = [];
+  const years = (await fs.readdir(dataDirectory)).filter((entry) =>
+    yearSchema.validate(entry).error ? false : true,
+  );
+  for (const year of years) {
+    const dir = path.join(dataDirectory, year, "sales-tax");
+    let stateFiles: string[];
+    try {
+      stateFiles = await fs.readdir(path.join(dir, "state"));
+    } catch {
+      continue;
+    }
+    try {
+      const table = (await import(path.join(dir, "taxable-spending.ts")))
+        .default;
+      const { error } = taxableSpendingSchema.validate(table, {
+        abortEarly: false,
+        convert: false,
+      });
+      if (error)
+        problems.push(`${year}/sales-tax/taxable-spending: ${error.message}`);
+      problems.push(
+        ...taxableSpendingProblems(`${year}/sales-tax/taxable-spending`, table),
+      );
+    } catch {
+      problems.push(
+        `${year}/sales-tax has state files but no taxable-spending.ts`,
+      );
+    }
+    for (const file of stateFiles) {
+      const state = file.replace(/\.ts$/, "");
+      const where = `${year}/sales-tax/${state}`;
+      if (!ALL_STATES.includes(state)) {
+        problems.push(`${where}: not a state in constants/states.ts`);
+      }
+      const data = (await import(path.join(dir, "state", file))).default;
+      const { error } = salesTaxSchema.validate(data, {
+        abortEarly: false,
+        convert: false,
+      });
+      if (error) problems.push(`${where}: ${error.message}`);
+      problems.push(...salesTaxProblems(where, data));
+    }
+  }
+  return problems;
+}
+
 async function main() {
   const { taxDataByYear } = await readTaxDataFromDisk(
     process.cwd() + "/src/data",
@@ -629,6 +765,11 @@ async function main() {
         }
       }
     }
+  }
+
+  for (const problem of await validateSalesTax(process.cwd() + "/src/data")) {
+    errorCount++;
+    errors.push(`${errorCount}. ${problem}`);
   }
 
   if (errors.length) {

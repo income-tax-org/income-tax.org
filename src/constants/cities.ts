@@ -246,3 +246,43 @@ export const WAYNE_COUNTY = "wayne_county";
 export const WELLS_COUNTY = "wells_county";
 export const WHITE_COUNTY = "white_county";
 export const WHITLEY_COUNTY = "whitley_county";
+
+// Washington. No city here levies an income or payroll tax; these exist for
+// the local sales tax in src/data/{year}/sales-tax. AUBURN is shared with
+// Alabama above.
+export const SEATTLE = "seattle";
+export const SPOKANE = "spokane";
+export const TACOMA = "tacoma";
+export const VANCOUVER = "vancouver";
+export const BELLEVUE = "bellevue";
+export const KENT = "kent";
+export const EVERETT = "everett";
+export const RENTON = "renton";
+export const SPOKANE_VALLEY = "spokane_valley";
+export const FEDERAL_WAY = "federal_way";
+export const YAKIMA = "yakima";
+export const KIRKLAND = "kirkland";
+export const BELLINGHAM = "bellingham";
+export const KENNEWICK = "kennewick";
+export const PASCO = "pasco";
+export const REDMOND = "redmond";
+export const MARYSVILLE = "marysville";
+export const SAMMAMISH = "sammamish";
+export const LAKEWOOD = "lakewood";
+export const RICHLAND = "richland";
+export const SHORELINE = "shoreline";
+export const LACEY = "lacey";
+export const OLYMPIA = "olympia";
+export const BURIEN = "burien";
+export const BOTHELL = "bothell";
+export const BREMERTON = "bremerton";
+export const EDMONDS = "edmonds";
+export const PUYALLUP = "puyallup";
+export const LYNNWOOD = "lynnwood";
+export const ISSAQUAH = "issaquah";
+export const LAKE_STEVENS = "lake_stevens";
+export const LONGVIEW = "longview";
+export const WENATCHEE = "wenatchee";
+export const MOUNT_VERNON = "mount_vernon";
+export const WALLA_WALLA = "walla_walla";
+export const PULLMAN = "pullman";

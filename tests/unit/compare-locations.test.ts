@@ -8,12 +8,14 @@ import {
 import { toUnit } from "@/utils/money";
 import { SINGLE } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
-import type { TaxData } from "@/types";
+import type { SalesTaxData, TaxData } from "@/types";
 import federal2025 from "@/data/2025/federal";
 import wisconsin2025 from "@/data/2025/state/wisconsin";
 import oregon2025 from "@/data/2025/state/oregon";
 import texas2025 from "@/data/2025/state/texas";
 import washington2025 from "@/data/2025/state/washington";
+import washingtonSalesTax2025 from "@/data/2025/sales-tax/state/washington";
+import oregonSalesTax2025 from "@/data/2025/sales-tax/state/oregon";
 
 const stateTaxesByState: Record<string, TaxData> = {
   oregon: oregon2025 as TaxData,
@@ -159,5 +161,71 @@ describe("buildComparison", () => {
     const [row] = compare([{ state: "texas", city: "" }], 0);
     expect(Number.isNaN(row.effectiveRate)).toBe(false);
     expect(row.effectiveRate).toBe(0);
+  });
+});
+
+describe("buildComparison with sales tax", () => {
+  const withSalesTax = (
+    locations: { state: string; city: string }[],
+    spending: number,
+  ) =>
+    buildComparison({
+      locations,
+      stateTaxesByState,
+      federalTaxes: federal2025 as TaxData,
+      income: 150_000,
+      filingStatus: SINGLE as FilingStatus,
+      totalIRA: 0,
+      federalDeductions: undefined,
+      salesTax: {
+        spending,
+        year: 2025,
+        dataByState: {
+          washington: washingtonSalesTax2025 as SalesTaxData,
+          oregon: oregonSalesTax2025 as SalesTaxData,
+          texas: null,
+        },
+      },
+    });
+
+  it("takes the sales tax out of take home", () => {
+    const [seattle] = withSalesTax(
+      [{ state: "washington", city: "seattle" }],
+      20_000,
+    );
+    // 6.5% + Seattle's 3.85%, all of 2025.
+    expect(toUnit(seattle.salesTax!)).toBe(2070);
+    expect(toUnit(seattle.leftOver)).toBeCloseTo(
+      toUnit(seattle.takeHome) - 2070,
+      2,
+    );
+  });
+
+  it("charges Oregon nothing", () => {
+    const [oregon] = withSalesTax([{ state: "oregon", city: "" }], 20_000);
+    expect(toUnit(oregon.salesTax!)).toBe(0);
+    expect(toUnit(oregon.leftOver)).toBe(toUnit(oregon.takeHome));
+  });
+
+  it("ranks on what is left after sales tax", () => {
+    const locations = [
+      { state: "oregon", city: "" },
+      { state: "washington", city: "seattle" },
+    ];
+    // On take home alone Washington wins: it has no income tax.
+    expect(withSalesTax(locations, 0)[0].id).toBe("washington/seattle");
+    // Spend enough and Seattle's 10.35% costs more than Oregon's income tax.
+    const rows = withSalesTax(locations, 200_000);
+    expect(rows[0].id).toBe("oregon");
+    expect(rows[1].behindLeaderBy).toBeCloseTo(
+      toUnit(rows[0].leftOver) - toUnit(rows[1].leftOver),
+      2,
+    );
+  });
+
+  it("flags a state with no sales tax data rather than charging it", () => {
+    const [texas] = withSalesTax([{ state: "texas", city: "" }], 20_000);
+    expect(texas.salesTax).toBeNull();
+    expect(toUnit(texas.leftOver)).toBe(toUnit(texas.takeHome));
   });
 });

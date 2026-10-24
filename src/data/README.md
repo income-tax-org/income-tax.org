@@ -354,6 +354,55 @@ export default {
 };
 ```
 
+## Sales tax
+
+Sales tax lives apart from the income tax data, in
+`{year}/sales-tax/`, because it is charged on spending rather than income.
+The income calculator never reads it. Only the comparison page does, to rank
+locations on take-home pay less the sales tax on a year's taxable spending.
+
+- `sales-tax/state/{state}.ts` — the state's rate, a fallback local rate for
+  a location with no city picked, and each listed city's own local rate under
+  `[CITIES]`. A city not listed falls back too.
+- `sales-tax/taxable-spending.ts` — the IRS table the default spending figure
+  is derived from.
+
+A state with no file has **no data**, which is different from no sales tax:
+Oregon has a file of zeros, and the comparison flags any state without one
+rather than charging it nothing silently.
+
+```typescript
+export default {
+  [STATE_SALES_TAX]: 6.5,
+  [LOCAL_SALES_TAX]: [3.01, 3.01, 3.07, 3.07], // no city picked
+  [CITIES]: {
+    [SEATTLE]: { [LOCAL_SALES_TAX]: 4.05 },              // all year
+    [TACOMA]: { [LOCAL_SALES_TAX]: [3.8, 3.9, 4, 4] },   // by quarter
+  },
+} as SalesTaxData;
+```
+
+- Rates are percentages, like every other rate here.
+- A rate that changed during the year is written as four quarterly rates, Q1
+  to Q4; one that did not is a single number. `npm run validate-tax-data`
+  rejects four equal quarters. Washington lets a local change take effect
+  only at the start of a quarter (RCW 82.14.055), and the calculator weights
+  each quarter by its days.
+- Washington's figures come from the Department of Revenue's quarterly
+  `Rates_YYQn.csv` downloads. Each city carries a comment with the DOR
+  location code it was read from. Where DOR splits a city by Sound Transit's
+  district or by county, use the code covering most residents.
+- The fallback local rate is the Tax Foundation's population-weighted average,
+  which is published each January and July.
+
+### Default taxable spending
+
+The IRS Optional State Sales Tax Table (Schedule A instructions) gives the
+sales tax a household is estimated to pay, by income and family size. Divide
+it by the rate it was computed at and you get the taxable spending behind it.
+That is the default the user can override. Transcribe the rows as printed.
+They read "at least / but less than", so bands are half-open, `[min, max)`.
+
 ## Contributing
 
 When adding a new state or city:

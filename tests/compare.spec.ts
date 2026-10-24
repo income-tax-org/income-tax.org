@@ -216,3 +216,76 @@ test("drops the introductory blurb", async ({ page }) => {
   await page.waitForTimeout(1000);
   await expect(page.getByText(/See what the same salary/)).toHaveCount(0);
 });
+
+test("sales tax can flip Washington against Oregon", async ({ page }) => {
+  await page.goto(
+    "/compare/2026?locations=oregon,washington/seattle&income=150000&sales-tax=1",
+    { waitUntil: "domcontentloaded" },
+  );
+  await page.waitForTimeout(1500);
+
+  // At the IRS estimate Washington's lack of income tax still wins, and the
+  // row says what Seattle's sales tax cost.
+  await expect(rows(page).first()).toContainText("Seattle, Washington");
+  await expect(
+    rows(page).first().getByTestId("compare-sales-tax"),
+  ).toContainText("10.55%");
+  // Washington alone is charged the statewide average and says so; Oregon's
+  // zero is exact, so it does not.
+  await page.goto(
+    "/compare/2026?locations=oregon,washington,washington/vancouver&income=150000&sales-tax=1",
+    { waitUntil: "domcontentloaded" },
+  );
+  await page.waitForTimeout(1500);
+  await expect(
+    rows(page).filter({ hasText: "Washington (state average)" }),
+  ).toHaveCount(1);
+  await expect(
+    rows(page).filter({ hasText: "Vancouver, Washington (state average)" }),
+  ).toHaveCount(0);
+  await expect(
+    rows(page).filter({ hasText: "Oregon (state average)" }),
+  ).toHaveCount(0);
+  await page.goto(
+    "/compare/2026?locations=oregon,washington/seattle&income=150000&sales-tax=1",
+    { waitUntil: "domcontentloaded" },
+  );
+  await page.waitForTimeout(1500);
+
+  // Oregon has data saying it has no sales tax, so nothing is flagged.
+  await expect(page.getByTestId("compare-sales-tax-missing")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Sales tax" }).click();
+  await page.fill("input#compare-taxable-spending", "200000");
+  await page.waitForTimeout(500);
+
+  await expect(rows(page).first()).toContainText("Oregon");
+  expect(page.url()).toContain("spending=200000");
+});
+
+test("sales tax offers Washington's cities and flags states without data", async ({
+  page,
+}) => {
+  await page.goto("/compare/2026?locations=texas&income=150000", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForTimeout(1500);
+
+  await page.getByRole("button", { name: "Sales tax" }).click();
+  await page.getByLabel("Include sales tax").check();
+  await expect(page.getByTestId("compare-sales-tax-missing")).toContainText(
+    "Texas",
+  );
+  expect(page.url()).toContain("sales-tax=1");
+
+  await page.fill("input#compare-state-select", "Washington");
+  await page.getByRole("option", { name: "Washington" }).click();
+  await page.fill("input#compare-city-select", "Tacoma");
+  await page.getByRole("option", { name: "Tacoma" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.waitForTimeout(800);
+
+  await expect(
+    rows(page).filter({ hasText: "Tacoma, Washington" }),
+  ).toHaveCount(1);
+});

@@ -36,6 +36,17 @@ MFJ/2 rule (IRC §1), so the 35% cap is $384,350, not the single-filer
 $640,600. This matches the repo's 2025 precedent. Web tables often mis-state
 MFS by copying single-filer thresholds — do not.
 
+## Sales tax — `src/data/2026/sales-tax/`
+
+Only Oregon and Washington so far.
+
+| Item                         | Status          | Source                                                     |
+| ---------------------------- | --------------- | ---------------------------------------------------------- |
+| Washington state + 37 cities | done            | WA DOR `Rates_26Q1.csv`–`Rates_26Q4.csv`                   |
+| Washington no-city fallback  | done            | Tax Foundation average local rate, Jan & Jul 2026          |
+| Oregon                       | done            | no general sales tax                                       |
+| Default taxable spending     | **provisional** | CARRIED FROM 2025: IRS 2025 Optional State Sales Tax Table |
+
 ## States (50 + DC)
 
 All 51 files present and the repo validator (`npm run validate-tax-data`)

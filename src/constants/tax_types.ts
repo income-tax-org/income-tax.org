@@ -128,3 +128,14 @@ export const NON_WAGE_TAX_TYPES: string[] = [
   EMPLOYER_PAYROLL_TAX,
   DC_PAID_FAMILY_LEAVE,
 ];
+
+// Sales tax. Kept in its own files, src/data/{year}/sales-tax, and never read
+// by the income calculator. See src/data/README.md.
+/** The state's own general sales tax rate. */
+export const STATE_SALES_TAX = "state_sales_tax";
+/**
+ * The local rate on top of the state's. At the top of a state file it is the
+ * fallback for a location with no city picked; under [CITIES] it is that
+ * city's own.
+ */
+export const LOCAL_SALES_TAX = "local_sales_tax";
