@@ -32,7 +32,7 @@ test("the bracket ladder marks the band the last dollar lands in", async ({
   await expect(
     page.getByRole("heading", { name: "Tax brackets" }),
   ).toBeVisible();
-  await expect(page.getByText("your top rate")).toHaveCount(1);
+  await expect(page.locator('dt[aria-current="true"]')).toHaveCount(1);
 });
 
 test("the marginal rate falls at the Social Security wage base", async ({
@@ -87,10 +87,10 @@ test("a state's own bands are available too", async ({ page }) => {
 
   // Oregon's top band, which a $250,000 income reaches.
   await expect(page.getByText("9.9%")).toBeVisible();
-  await expect(page.getByText("your top rate")).toHaveCount(1);
+  await expect(page.locator('dt[aria-current="true"]')).toHaveCount(1);
 });
 
-test("a payroll tax is measured against gross, not taxable income", async ({
+test("a payroll tax shows its wage base as a band ceiling", async ({
   page,
 }) => {
   await page.goto("/2025/oregon/portland/?income=250000", {
@@ -102,9 +102,7 @@ test("a payroll tax is measured against gross, not taxable income", async ({
   await page.getByRole("option", { name: "Social Security" }).click();
   await page.waitForTimeout(400);
 
-  // Gross, not the $234,250 federal taxable figure the income tax uses.
-  await expect(page.getByText(/on \$250,000 of the income/)).toBeVisible();
-  // And the wage base shows up as the band's ceiling.
+  // The wage base shows up as the band's ceiling.
   await expect(page.getByText("$0 – $176,100")).toBeVisible();
 });
 

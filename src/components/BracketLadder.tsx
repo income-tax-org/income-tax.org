@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, MenuItem, TextField, Typography, useTheme } from "@mui/material";
+import { Box, MenuItem, TextField, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import type { LadderSchedule } from "@/utils/bracket-schedules";
 import { buildBracketLadder } from "@/utils/marginal-rate";
@@ -20,7 +20,6 @@ type BracketLadderProps = {
  * Saying so is much less convincing than showing the slices.
  */
 export function BracketLadder({ schedules }: BracketLadderProps) {
-  const theme = useTheme();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   // Falls back to the first schedule, so changing state or city cannot leave
@@ -72,13 +71,6 @@ export function BracketLadder({ schedules }: BracketLadderProps) {
     <Box>
       {picker}
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Only the part of your income inside each band is taxed at that
-        band&apos;s rate, on{" "}
-        {formatMoneyNoCents(asCurrency(active.taxableIncome))} of the income
-        this tax is measured against.
-      </Typography>
-
       <Box
         component="dl"
         sx={{
@@ -97,7 +89,11 @@ export function BracketLadder({ schedules }: BracketLadderProps) {
               key={step.min}
               sx={{ display: "contents", opacity: used ? 1 : 0.45 }}
             >
-              <Box component="dt" sx={{ whiteSpace: "nowrap" }}>
+              <Box
+                component="dt"
+                aria-current={step.isCurrent ? "true" : undefined}
+                sx={{ whiteSpace: "nowrap" }}
+              >
                 <Typography
                   variant="body2"
                   component="span"
@@ -116,24 +112,6 @@ export function BracketLadder({ schedules }: BracketLadderProps) {
                     ? "+"
                     : ` – ${formatMoneyNoCents(asCurrency(step.max))}`}
                 </Typography>
-                {step.isCurrent ? (
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 1,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: 1,
-                      fontSize: "0.6875rem",
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                      color: theme.palette.getContrastText(accent),
-                      bgcolor: accent,
-                    }}
-                  >
-                    your top rate
-                  </Box>
-                ) : null}
               </Box>
 
               <Box
