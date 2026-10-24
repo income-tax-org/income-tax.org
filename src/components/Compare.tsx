@@ -30,12 +30,7 @@ import { FILING_STATUSES } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
 import { COMPARE } from "@/constants/pages";
 import { MAX_401K_CONTRIBUTION } from "@/constants/tax_types";
-import type {
-  AvailableStatesAndCities,
-  SalesTaxData,
-  TaxData,
-  TaxableSpendingTable,
-} from "@/types";
+import type { AvailableStatesAndCities, SalesTaxData, TaxData } from "@/types";
 import { getSegmentColor } from "@/constants/chart-colors";
 import {
   buildComparison,
@@ -137,22 +132,6 @@ async function loadSalesTax(
   }
 }
 
-/** Null for a year with no sales tax data at all. */
-async function loadSpendingTable(
-  year: string,
-): Promise<TaxableSpendingTable | null> {
-  try {
-    const mod = (await import(
-      `@/data/${year}/sales-tax/taxable-spending.ts`
-    )) as {
-      default: TaxableSpendingTable;
-    };
-    return mod.default;
-  } catch {
-    return null;
-  }
-}
-
 function labelFor({ state, city }: ComparedLocation): string {
   return city
     ? `${snakeToTitleCase(city)}, ${snakeToTitleCase(state)}`
@@ -190,8 +169,6 @@ export default function Compare({
   const [salesTaxByState, setSalesTaxByState] = useState<
     Record<string, SalesTaxData | null>
   >({});
-  const [spendingTable, setSpendingTable] =
-    useState<TaxableSpendingTable | null>(null);
 
   const availableStatesAndCities = statesAndCitiesForYear[year];
 
@@ -291,23 +268,19 @@ export default function Compare({
         }),
       );
       // Small files, and only fetched once sales tax is switched on.
-      const [table, salesTax] = includeSalesTax
-        ? await Promise.all([
-            loadSpendingTable(year),
-            Promise.all(
-              wanted.map(
-                async (state) =>
-                  [state, await loadSalesTax(year, state)] as const,
-              ),
+      const salesTax = includeSalesTax
+        ? await Promise.all(
+            wanted.map(
+              async (state) =>
+                [state, await loadSalesTax(year, state)] as const,
             ),
-          ])
-        : [null, []];
+          )
+        : [];
       if (cancelled) return;
       setFederalTaxes(federal.default);
       setStateTaxesByState(
         Object.fromEntries(loaded.filter(Boolean) as [string, TaxData][]),
       );
-      setSpendingTable(table);
       setSalesTaxByState(Object.fromEntries(salesTax));
     }
 
@@ -317,18 +290,7 @@ export default function Compare({
     };
   }, [locations, year, includeSalesTax]);
 
-  const estimatedSpending = useMemo(
-    () =>
-      spendingTable
-        ? defaultTaxableSpending(spendingTable, income, filingStatus)
-        : undefined,
-    [spendingTable, income, filingStatus],
-  );
-  const effectiveSpending = spending ?? estimatedSpending;
-  // On, and with data for this year. Years before sales tax data was
-  // gathered have no table, and so no estimate to compare with.
-  const comparingSalesTax =
-    includeSalesTax && typeof effectiveSpending !== "undefined";
+  const comparingSalesTax = includeSalesTax;
 
   const rows = useMemo(
     () =>
@@ -340,14 +302,13 @@ export default function Compare({
         filingStatus,
         totalIRA,
         federalDeductions,
-        salesTax:
-          comparingSalesTax && typeof effectiveSpending !== "undefined"
-            ? {
-                spending: effectiveSpending,
-                year: parseInt(year, 10),
-                dataByState: salesTaxByState,
-              }
-            : undefined,
+        salesTax: comparingSalesTax
+          ? {
+              spending,
+              year: parseInt(year, 10),
+              dataByState: salesTaxByState,
+            }
+          : undefined,
       }),
     [
       locations,
@@ -358,7 +319,7 @@ export default function Compare({
       totalIRA,
       federalDeductions,
       comparingSalesTax,
-      effectiveSpending,
+      spending,
       year,
       salesTaxByState,
     ],
@@ -372,6 +333,28 @@ export default function Compare({
         .filter((row) => salesTaxByState[row.location.state] === null)
         .map((row) => labelFor(row.location))
     : [];
+
+  /**
+   * The estimate shown in the spending field. Each state estimates from its
+   * own IRS table, since tax bases differ, so like the state deduction this is
+   * one figure only when every compared state agrees.
+   */
+  const estimatedSpending = useMemo(() => {
+    const values = Array.from(
+      new Set(
+        locations.flatMap((location) => {
+          const salesTax = salesTaxByState[location.state];
+          const value =
+            salesTax && defaultTaxableSpending(salesTax, income, filingStatus);
+          return typeof value === "number" ? [value] : [];
+        }),
+      ),
+    );
+    if (!values.length) return "";
+    return values.length === 1
+      ? values[0].toLocaleString("en-US")
+      : VARIES_BY_STATE;
+  }, [locations, salesTaxByState, income, filingStatus]);
 
   const max401KContribution = useMemo(
     () => (federalTaxes?.[MAX_401K_CONTRIBUTION] as number) ?? 0,
@@ -603,18 +586,12 @@ export default function Compare({
               type="text"
               variant="outlined"
               disabled={!includeSalesTax}
-              placeholder={
-                typeof estimatedSpending === "undefined"
-                  ? ""
-                  : estimatedSpending.toLocaleString("en-US")
-              }
+              placeholder={estimatedSpending}
               inputProps={{ inputMode: "numeric", autoComplete: "off" }}
               helperText={
-                includeSalesTax && typeof estimatedSpending === "undefined"
-                  ? `No sales tax data for ${year} yet`
-                  : typeof spending === "undefined"
-                    ? "Estimated based on your income"
-                    : "Purchases that are taxed; groceries and rent usually are not"
+                typeof spending === "undefined"
+                  ? "Estimated based on your income"
+                  : "Purchases that are taxed; groceries and rent usually are not"
               }
               value={
                 typeof spending === "undefined"

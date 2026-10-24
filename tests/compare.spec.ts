@@ -263,9 +263,18 @@ test("sales tax can flip Washington against Oregon", async ({ page }) => {
   expect(page.url()).toContain("spending=200000");
 });
 
-test("sales tax offers Washington's cities and flags states without data", async ({
+test("sales tax offers Washington's cities and flags years without data", async ({
   page,
 }) => {
+  // Sales tax data starts in 2025.
+  await page.goto("/compare/2024?locations=texas&income=150000&sales-tax=1", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForTimeout(1500);
+  await expect(page.getByTestId("compare-sales-tax-missing")).toContainText(
+    "Texas",
+  );
+
   await page.goto("/compare/2026?locations=texas&income=150000", {
     waitUntil: "domcontentloaded",
   });
@@ -273,10 +282,11 @@ test("sales tax offers Washington's cities and flags states without data", async
 
   await page.getByRole("button", { name: "Sales tax" }).click();
   await page.getByLabel("Include sales tax").check();
-  await expect(page.getByTestId("compare-sales-tax-missing")).toContainText(
-    "Texas",
-  );
   expect(page.url()).toContain("sales-tax=1");
+  await expect(page.getByTestId("compare-sales-tax-missing")).toHaveCount(0);
+  await expect(
+    rows(page).first().getByTestId("compare-sales-tax"),
+  ).toBeVisible();
 
   await page.fill("input#compare-state-select", "Washington");
   await page.getByRole("option", { name: "Washington" }).click();

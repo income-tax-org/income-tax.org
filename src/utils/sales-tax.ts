@@ -1,29 +1,38 @@
 import { CITIES, INFINITY } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
 import { HEAD_OF_HOUSEHOLD, MARRIED } from "@/constants/filing-status";
-import { LOCAL_SALES_TAX, STATE_SALES_TAX } from "@/constants/tax_types";
-import type { SalesTaxData, SalesTaxRate, TaxableSpendingTable } from "@/types";
+import {
+  LOCAL_SALES_TAX,
+  STATE_SALES_TAX,
+  TAXABLE_SPENDING,
+} from "@/constants/tax_types";
+import type { SalesTaxData, SalesTaxRate } from "@/types";
 import type { Money } from "./money";
 import { asCurrency, percentage } from "./money";
 
-type Quarterly = [number, number, number, number];
+const MONTHS = Array.from({ length: 12 }, (_, month) => month);
 
-function quarterly(rate: SalesTaxRate): Quarterly {
-  return typeof rate === "number" ? [rate, rate, rate, rate] : rate;
+/** The rate in force each month, whichever way the file wrote it. */
+function monthly(rate: SalesTaxRate): number[] {
+  if (typeof rate === "number") return MONTHS.map(() => rate);
+  // Quarterly: each quarter's rate for its three months.
+  if (rate.length === 4) return MONTHS.map((month) => rate[(month / 3) | 0]);
+  return rate;
 }
 
 /**
- * Days in each calendar quarter of `year`, so a rate that changed mid-year is
- * weighted by how long it was in force. Q1 is 90 or 91 days, Q3 92.
+ * Days in each month of `year`, so a rate that changed mid-year is weighted by
+ * how long it was in force.
  */
-function daysPerQuarter(year: number): Quarterly {
-  const days = (fromMonth: number, toMonth: number) =>
-    (Date.UTC(year, toMonth, 1) - Date.UTC(year, fromMonth, 1)) / 86_400_000;
-  return [days(0, 3), days(3, 6), days(6, 9), days(9, 12)];
+function daysPerMonth(year: number): number[] {
+  return MONTHS.map(
+    (month) =>
+      (Date.UTC(year, month + 1, 1) - Date.UTC(year, month, 1)) / 86_400_000,
+  );
 }
 
 /**
- * Combined state and local rate for each quarter, in percent.
+ * Combined state and local rate for each month, in percent.
  *
  * A city the file does not list falls back to the state's average local rate,
  * the same as picking no city: every Washington location levies some local
@@ -32,12 +41,12 @@ function daysPerQuarter(year: number): Quarterly {
 export function salesTaxRatesFor(
   salesTax: SalesTaxData,
   city: string,
-): Quarterly {
-  const state = quarterly(salesTax[STATE_SALES_TAX]);
-  const local = quarterly(
+): number[] {
+  const state = monthly(salesTax[STATE_SALES_TAX]);
+  const local = monthly(
     salesTax[CITIES]?.[city]?.[LOCAL_SALES_TAX] ?? salesTax[LOCAL_SALES_TAX],
   );
-  return state.map((rate, i) => rate + local[i]) as Quarterly;
+  return state.map((rate, i) => rate + local[i]);
 }
 
 export type SalesTaxEstimate = {
@@ -49,7 +58,7 @@ export type SalesTaxEstimate = {
 /**
  * Sales tax on a year's taxable spending, spread evenly across the year.
  *
- * Each quarter's share of the spending is charged at that quarter's rate.
+ * Each month's share of the spending is charged at that month's rate.
  * Tacoma's rate rose twice in 2026; charging the whole year at the October
  * rate would overstate it. The rates are averaged by days and the tax rounded
  * once, so a rate that held all year gives exactly spending times rate.
@@ -61,7 +70,7 @@ export function estimateSalesTax(
   year: number,
 ): SalesTaxEstimate {
   const rates = salesTaxRatesFor(salesTax, city);
-  const days = daysPerQuarter(year);
+  const days = daysPerMonth(year);
   const daysInYear = days.reduce((sum, d) => sum + d, 0);
   const effectiveRate = rates.reduce(
     (sum, rate, i) => sum + (rate * days[i]) / daysInYear,
@@ -83,17 +92,23 @@ function familySizeFor(filingStatus: FilingStatus): number {
 }
 
 /**
- * A starting estimate of a year's taxable spending, in whole dollars.
+ * A starting estimate of a year's taxable spending in this state, in whole
+ * dollars. Undefined for a state with no sales tax, and so no IRS table.
  *
- * The IRS table's sales tax for this income and family size, divided by the
- * rate the table was computed at. The table's income is AGI plus nontaxable
- * receipts; gross income is passed as the nearest figure on hand.
+ * The state's IRS table's sales tax for this income and family size, divided
+ * by the rate the table was computed at. Each state's own table, because tax
+ * bases differ: Alabama taxes groceries, Washington does not, and the same
+ * household has more taxable spending in the first. The table's income is AGI
+ * plus nontaxable receipts; gross income is passed as the nearest figure on
+ * hand.
  */
 export function defaultTaxableSpending(
-  table: TaxableSpendingTable,
+  salesTax: SalesTaxData,
   income: number,
   filingStatus: FilingStatus,
-): number {
+): number | undefined {
+  const table = salesTax[TAXABLE_SPENDING];
+  if (!table) return undefined;
   const band =
     table.bands.find(
       (b) =>
@@ -114,7 +129,7 @@ export function usesAverageLocalRate(
 ): boolean {
   return (
     !salesTax[CITIES]?.[city] &&
-    quarterly(salesTax[LOCAL_SALES_TAX]).some((rate) => rate > 0)
+    monthly(salesTax[LOCAL_SALES_TAX]).some((rate) => rate > 0)
   );
 }
 

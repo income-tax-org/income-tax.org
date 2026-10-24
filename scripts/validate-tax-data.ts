@@ -26,6 +26,7 @@ import {
   STATE_INCOME,
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
+  TAXABLE_SPENDING,
 } from "@/constants/tax_types";
 import { ALL_STATES } from "@/constants/states";
 import { promises as fs } from "fs";
@@ -468,23 +469,13 @@ function validateIncomeTaxSchedule(
 }
 
 // Sales tax. See src/data/README.md. A rate is a percent: one number, or four
-// quarterly ones when it changed during the year.
+// quarterly or twelve monthly ones when it changed during the year.
 const salesTaxPercent = Joi.number().min(0).max(15);
 const salesTaxRate = Joi.alternatives(
   salesTaxPercent,
   Joi.array().items(salesTaxPercent).length(4),
+  Joi.array().items(salesTaxPercent).length(12),
 );
-
-const salesTaxSchema = Joi.object().keys({
-  [STATE_SALES_TAX]: salesTaxRate.required(),
-  [LOCAL_SALES_TAX]: salesTaxRate.required(),
-  [CITIES]: Joi.object()
-    .pattern(
-      Joi.string().pattern(isSnakeCaseRegex),
-      Joi.object().keys({ [LOCAL_SALES_TAX]: salesTaxRate.required() }),
-    )
-    .optional(),
-});
 
 const taxableSpendingSchema = Joi.object().keys({
   rate: Joi.number().greater(0).max(15).required(),
@@ -503,6 +494,18 @@ const taxableSpendingSchema = Joi.object().keys({
     .required(),
 });
 
+const salesTaxSchema = Joi.object().keys({
+  [STATE_SALES_TAX]: salesTaxRate.required(),
+  [LOCAL_SALES_TAX]: salesTaxRate.required(),
+  [TAXABLE_SPENDING]: taxableSpendingSchema.optional(),
+  [CITIES]: Joi.object()
+    .pattern(
+      Joi.string().pattern(isSnakeCaseRegex),
+      Joi.object().keys({ [LOCAL_SALES_TAX]: salesTaxRate.required() }),
+    )
+    .optional(),
+});
+
 /** Problems Joi cannot see: shape-valid data that is still written wrong. */
 function salesTaxProblems(where: string, data: any): string[] {
   const problems: string[] = [];
@@ -515,11 +518,26 @@ function salesTaxProblems(where: string, data: any): string[] {
     ),
   ];
   for (const [at, rate] of rates) {
-    // A rate that held all year is written once, so a quarterly array in the
-    // file always means the rate changed.
-    if (Array.isArray(rate) && rate.every((r) => r === rate[0])) {
-      problems.push(`${at}: four equal quarterly rates; write ${rate[0]}`);
+    if (!Array.isArray(rate)) continue;
+    // A rate is written in its shortest form, so an array always means the
+    // rate changed, and a monthly one that it changed mid-quarter.
+    if (rate.every((r) => r === rate[0])) {
+      problems.push(`${at}: equal rates all year; write ${rate[0]}`);
+    } else if (
+      rate.length === 12 &&
+      rate.every((r, month) => r === rate[month - (month % 3)])
+    ) {
+      problems.push(`${at}: monthly rates that only change by quarter`);
     }
+  }
+  const charged = [data?.[STATE_SALES_TAX], data?.[LOCAL_SALES_TAX]]
+    .flat()
+    .some((r) => r > 0);
+  if (charged && !data?.[TAXABLE_SPENDING]) {
+    problems.push(`${where}: has sales tax but no IRS table to estimate from`);
+  }
+  if (data?.[TAXABLE_SPENDING]) {
+    problems.push(...taxableSpendingProblems(where, data[TAXABLE_SPENDING]));
   }
   return problems;
 }
@@ -563,23 +581,6 @@ async function validateSalesTax(dataDirectory: string): Promise<string[]> {
       stateFiles = await fs.readdir(path.join(dir, "state"));
     } catch {
       continue;
-    }
-    try {
-      const table = (await import(path.join(dir, "taxable-spending.ts")))
-        .default;
-      const { error } = taxableSpendingSchema.validate(table, {
-        abortEarly: false,
-        convert: false,
-      });
-      if (error)
-        problems.push(`${year}/sales-tax/taxable-spending: ${error.message}`);
-      problems.push(
-        ...taxableSpendingProblems(`${year}/sales-tax/taxable-spending`, table),
-      );
-    } catch {
-      problems.push(
-        `${year}/sales-tax has state files but no taxable-spending.ts`,
-      );
     }
     for (const file of stateFiles) {
       const state = file.replace(/\.ts$/, "");

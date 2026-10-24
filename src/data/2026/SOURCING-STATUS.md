@@ -38,14 +38,20 @@ MFS by copying single-filer thresholds — do not.
 
 ## Sales tax — `src/data/2026/sales-tax/`
 
-Only Oregon and Washington so far.
+**Status: done for every state and DC**, 2025 and 2026: 792 cities, about 20
+of the largest per state. States with no general local tax list no cities.
+Each file's header names its sources (state revenue department rate tables
+and download files first). Figures were gathered by one agent per batch of
+states and spot-checked by a second agent against a different source.
 
-| Item                         | Status          | Source                                                     |
-| ---------------------------- | --------------- | ---------------------------------------------------------- |
-| Washington state + 37 cities | done            | WA DOR `Rates_26Q1.csv`–`Rates_26Q4.csv`                   |
-| Washington no-city fallback  | done            | Tax Foundation average local rate, Jan & Jul 2026          |
-| Oregon                       | done            | no general sales tax                                       |
-| Default taxable spending     | **provisional** | CARRIED FROM 2025: IRS 2025 Optional State Sales Tax Table |
+| Item                     | Status          | Notes                                                                              |
+| ------------------------ | --------------- | ---------------------------------------------------------------------------------- |
+| State and city rates     | done            | through Q4 2026                                                                    |
+| No-city fallback         | done            | Tax Foundation average local rate, Jan and Jul                                     |
+| Default taxable spending | **provisional** | CARRIED FROM 2025: IRS 2025 Optional Sales Tax Tables                              |
+| Arizona, December 2026   | **provisional** | ADOR's December table was unpublished; November rates assumed to hold              |
+| Nevada                   | done            | no rate document dated 2026; no change notices found, rates unchanged since 2020   |
+| District of Columbia     | done            | 6% all of 2025-2026; the increases to 6.5% and 7% were both postponed (OTR notice) |
 
 ## States (50 + DC)
 

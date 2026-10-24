@@ -167,7 +167,7 @@ describe("buildComparison", () => {
 describe("buildComparison with sales tax", () => {
   const withSalesTax = (
     locations: { state: string; city: string }[],
-    spending: number,
+    spending: number | undefined,
   ) =>
     buildComparison({
       locations,
@@ -221,6 +221,31 @@ describe("buildComparison with sales tax", () => {
       toUnit(rows[0].leftOver) - toUnit(rows[1].leftOver),
       2,
     );
+  });
+
+  it("estimates each location's spending from its own state's table", () => {
+    const [seattle, oregon] = withSalesTax(
+      [
+        { state: "washington", city: "seattle" },
+        { state: "oregon", city: "" },
+      ],
+      undefined,
+    );
+    // Washington's 2025 table, $140,000-$160,000, family of one: $1,171 at
+    // 6.5%. Oregon has no table, and nothing to estimate.
+    expect(seattle.spending).toBe(Math.round(1171 / 0.065));
+    expect(oregon.spending).toBe(0);
+  });
+
+  it("applies the user's figure to every location alike", () => {
+    const rows = withSalesTax(
+      [
+        { state: "washington", city: "seattle" },
+        { state: "oregon", city: "" },
+      ],
+      12_345,
+    );
+    expect(rows.map((row) => row.spending)).toEqual([12_345, 12_345]);
   });
 
   it("flags a state with no sales tax data rather than charging it", () => {

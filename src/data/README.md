@@ -361,15 +361,20 @@ Sales tax lives apart from the income tax data, in
 The income calculator never reads it. Only the comparison page does, to rank
 locations on take-home pay less the sales tax on a year's taxable spending.
 
-- `sales-tax/state/{state}.ts` — the state's rate, a fallback local rate for
-  a location with no city picked, and each listed city's own local rate under
-  `[CITIES]`. A city not listed falls back too.
-- `sales-tax/taxable-spending.ts` — the IRS table the default spending figure
-  is derived from.
+Each state has one file per year, `sales-tax/state/{state}.ts`, holding:
+
+- the state's rate,
+- a fallback local rate, used when no city is picked or the city isn't
+  listed,
+- each listed city's own local rate, under `[CITIES]` — the ~20 largest
+  places in the state,
+- the state's IRS table, under `[TAXABLE_SPENDING]`, for the default
+  spending estimate.
 
 A state with no file has **no data**, which is different from no sales tax:
 Oregon has a file of zeros, and the comparison flags any state without one
-rather than charging it nothing silently.
+rather than charging it nothing silently. Every state has a file for 2025
+and 2026; earlier years have none.
 
 ```typescript
 export default {
@@ -383,25 +388,45 @@ export default {
 ```
 
 - Rates are percentages, like every other rate here.
-- A rate that changed during the year is written as four quarterly rates, Q1
-  to Q4; one that did not is a single number. `npm run validate-tax-data`
-  rejects four equal quarters. Washington lets a local change take effect
-  only at the start of a quarter (RCW 82.14.055), and the calculator weights
-  each quarter by its days.
-- Washington's figures come from the Department of Revenue's quarterly
-  `Rates_YYQn.csv` downloads. Each city carries a comment with the DOR
-  location code it was read from. Where DOR splits a city by Sound Transit's
-  district or by county, use the code covering most residents.
+- A rate that held all year is a single number. One that changed is four
+  quarterly rates, Q1 to Q4, or twelve monthly ones where it changed on a
+  month that doesn't start a quarter, as Arizona's cities can. Most states only
+  allow quarterly changes (Washington's RCW 82.14.055, for one). The
+  calculator weights each month by its days, and `npm run validate-tax-data`
+  rejects an array that could be written shorter.
+- A city's local rate is everything on top of the state's for general retail
+  purchases inside the city limits: county, city, transit and special
+  districts. Reduced grocery rates and taxes on lodging, meals or vehicles are
+  left out. Where a city spans districts or counties with different rates,
+  use the portion where most residents live and say so.
+- Each file's header names its sources, and each city a comment saying where
+  its figure was read: Washington's cite the DOR location code from the
+  quarterly `Rates_YYQn.csv` downloads.
 - The fallback local rate is the Tax Foundation's population-weighted average,
-  which is published each January and July.
+  which is published each January and July, so each figure stands for the two
+  quarters after it. New Jersey's is slightly negative (its Urban Enterprise
+  Zones halve the rate for some sellers) and is written as 0.
 
 ### Default taxable spending
 
 The IRS Optional State Sales Tax Table (Schedule A instructions) gives the
 sales tax a household is estimated to pay, by income and family size. Divide
 it by the rate it was computed at and you get the taxable spending behind it.
-That is the default the user can override. Transcribe the rows as printed.
-They read "at least / but less than", so bands are half-open, `[min, max)`.
+That is the default the user can override.
+
+Each state uses its own table because tax bases differ. Alabama taxes
+groceries and Washington does not, so the same household has more taxable
+spending in Alabama. When the user types a figure it applies everywhere; left
+blank, each location estimates its own, and the field reads "Varies by state"
+when they differ.
+
+- Transcribe the rows as printed. They read "at least / but less than", so
+  bands are half-open, `[min, max)`.
+- `rate` is the one printed beside the state's name. For California and
+  Nevada it includes the uniform local rate (7.25%, 6.85%).
+- Alaska has no state table. Use the local table its localities are assigned
+  (Table C), at the 1% that table assumes.
+- A state with no sales tax has no table, and no estimate.
 
 ## Contributing
 

@@ -5,7 +5,7 @@ import { calculate } from "./calculator";
 import { standardDeductionFor } from "./standard-deduction";
 import type { Money } from "./money";
 import { subtract, toUnit } from "./money";
-import { estimateSalesTax } from "./sales-tax";
+import { defaultTaxableSpending, estimateSalesTax } from "./sales-tax";
 
 /** A place to compare: a state, optionally narrowed to one of its cities. */
 export type ComparedLocation = {
@@ -30,6 +30,8 @@ export type ComparisonRow = {
   salesTax: Money | null;
   /** Combined rate actually charged over the year, 0-100. */
   salesTaxRate: number;
+  /** The taxable spending it was charged on: the user's, or the estimate. */
+  spending: number;
   /** Take home less sales tax: what the ranking uses. */
   leftOver: Money;
   /** Dollars behind the best location in the set; 0 for the winner. */
@@ -83,7 +85,11 @@ type BuildArgs = {
    * row's null `salesTax`.
    */
   salesTax?: {
-    spending: number;
+    /**
+     * The user's own figure, for every location. Undefined estimates it per
+     * location from that state's IRS table.
+     */
+    spending: number | undefined;
     year: number;
     dataByState: Record<string, SalesTaxData | null>;
   };
@@ -128,13 +134,13 @@ export function buildComparison({
     );
 
     const salesTaxData = salesTax?.dataByState[location.state];
+    const spending = salesTaxData
+      ? salesTax.spending ??
+        defaultTaxableSpending(salesTaxData, income, filingStatus) ??
+        0
+      : 0;
     const salesTaxEstimate = salesTaxData
-      ? estimateSalesTax(
-          salesTaxData,
-          location.city,
-          salesTax.spending,
-          salesTax.year,
-        )
+      ? estimateSalesTax(salesTaxData, location.city, spending, salesTax.year)
       : null;
     const takeHome = result.takeHome.amount;
 
@@ -149,6 +155,7 @@ export function buildComparison({
           income > 0 ? (toUnit(result.totalTaxes) / income) * 100 : 0,
         salesTax: salesTaxEstimate?.tax ?? null,
         salesTaxRate: salesTaxEstimate?.effectiveRate ?? 0,
+        spending,
         leftOver: salesTaxEstimate
           ? subtract(takeHome, salesTaxEstimate.tax)
           : takeHome,

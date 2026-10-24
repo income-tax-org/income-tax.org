@@ -139,3 +139,8 @@ export const STATE_SALES_TAX = "state_sales_tax";
  * city's own.
  */
 export const LOCAL_SALES_TAX = "local_sales_tax";
+/**
+ * The state's IRS Optional Sales Tax Table, which the default taxable
+ * spending is estimated from.
+ */
+export const TAXABLE_SPENDING = "taxable_spending";

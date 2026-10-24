@@ -9,6 +9,7 @@ import type {
   STANDARD_DEDUCTION,
   STATE_INCOME,
   STATE_SALES_TAX,
+  TAXABLE_SPENDING,
 } from "../constants/tax_types";
 import type { CITIES, EXEMPT, INFINITY } from "../constants";
 import type { Money } from "@/utils/money";
@@ -213,12 +214,28 @@ export type NavPage = {
 };
 
 /**
- * A sales tax rate in percent, as a single number when it held all year or as
- * the rate for each calendar quarter when it changed. Quarters are the only
- * granularity needed: Washington lets a local rate change take effect only on
- * the first day of a quarter (RCW 82.14.055).
+ * A sales tax rate in percent: a single number when it held all year, or the
+ * rate for each calendar quarter -- or each month -- when it changed. Most
+ * states only let rates change at the start of a quarter (Washington's RCW
+ * 82.14.055, for one); a few, like Arizona's cities, can change any month.
  */
-export type SalesTaxRate = number | [number, number, number, number];
+export type SalesTaxRate =
+  | number
+  | [number, number, number, number]
+  | [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ];
 
 /**
  * One state's general sales tax for one year, in
@@ -230,6 +247,11 @@ export interface SalesTaxData {
   [STATE_SALES_TAX]: SalesTaxRate;
   /** Used for a location with no city picked, or a city not listed. */
   [LOCAL_SALES_TAX]: SalesTaxRate;
+  /**
+   * The state's IRS table, for the default spending estimate. Absent only
+   * where there is no sales tax to estimate.
+   */
+  [TAXABLE_SPENDING]?: TaxableSpendingTable;
   [CITIES]?: { [city: string]: { [LOCAL_SALES_TAX]: SalesTaxRate } };
 }
 
@@ -246,7 +268,10 @@ export type SalesTaxTableBand = {
 
 /**
  * The IRS table the default taxable spending is derived from: the table's
- * amounts divided by the state rate it was computed at.
+ * amounts divided by the rate it was computed at. That rate is the one the
+ * IRS prints beside the state's name -- which for California and Nevada
+ * includes their uniform local rate, and for Alaska, which uses a local
+ * table, is the 1% that table assumes.
  */
 export type TaxableSpendingTable = {
   rate: number;
