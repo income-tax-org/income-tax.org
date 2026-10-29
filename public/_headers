@@ -1,8 +1,13 @@
+# The App Router streams its payload through inline scripts, and MUI/Emotion
+# injects inline styles, so both need 'unsafe-inline'. The rest still rules
+# out other origins, plugins, framing and <base>/form hijacking.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
 
 # Cache static assets for 1 year
 /icon-*.png
