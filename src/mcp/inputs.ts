@@ -17,6 +17,13 @@ import { YEARS } from "./tax-data-registry";
 
 export const ANNUAL = "annual";
 
+/**
+ * Upper bound on every dollar input. Far past any real income, but low enough
+ * that the cent math stays well inside Number.MAX_SAFE_INTEGER; 1e300 used to
+ * reach the calculator and fail as a 500.
+ */
+export const MAX_DOLLARS = 1_000_000_000_000;
+
 type NonEmpty = [string, ...string[]];
 
 /** "New York", "new-york" and "NEW_YORK" all become "new_york". */
@@ -50,6 +57,7 @@ const commonFields = {
   retirement_contribution: z
     .number()
     .min(0)
+    .max(MAX_DOLLARS)
     .default(0)
     .describe(
       "Annual pre-tax 401(k) / traditional IRA contribution in dollars. Reduces income tax but not FICA or other payroll taxes, and is subtracted from take-home. Capped at the year's 401(k) limit.",
@@ -57,6 +65,7 @@ const commonFields = {
   federal_deductions: z
     .number()
     .min(0)
+    .max(MAX_DOLLARS)
     .optional()
     .describe(
       "Total federal deductions in dollars (itemized, or any custom figure). Omit to use the standard deduction for the filing status.",
@@ -64,6 +73,7 @@ const commonFields = {
   state_deductions: z
     .number()
     .min(0)
+    .max(MAX_DOLLARS)
     .optional()
     .describe(
       "Total state deductions in dollars. Omit to use the state's own standard deduction, including states that phase it out with income.",
@@ -88,7 +98,11 @@ const commonFields = {
 };
 
 export const calculateInput = z.object({
-  income: z.number().min(0).describe("Annual gross income in dollars."),
+  income: z
+    .number()
+    .min(0)
+    .max(MAX_DOLLARS)
+    .describe("Annual gross income in dollars."),
   ...commonFields,
 });
 
@@ -96,6 +110,7 @@ export const targetInput = z.object({
   take_home: z
     .number()
     .positive()
+    .max(MAX_DOLLARS)
     .describe(
       "Desired take-home pay in dollars, after all taxes and the retirement contribution, per target_period.",
     ),
