@@ -130,6 +130,15 @@ export function errorResponse(error: unknown): Response {
   return json({ error: "Internal error." }, 500, false);
 }
 
+/** The same status and headers with no body, to answer a HEAD request. */
+export function withoutBody(response: Response): Response {
+  return new Response(null, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
+
 /** Run one GET route: parse, validate, compute, respond. */
 export async function handleGet<Input>(
   request: Request,

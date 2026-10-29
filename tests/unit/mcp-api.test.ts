@@ -8,7 +8,7 @@ import newYork2026 from "@/data/2026/state/new_york";
 import { calculateInput } from "@/mcp/inputs";
 import type { CalculateInput } from "@/mcp/inputs";
 import { InputError, runCalculate } from "@/mcp/run";
-import { handleGet, parseQuery } from "@/mcp/http";
+import { handleGet, json, parseQuery, withoutBody } from "@/mcp/http";
 import { createServer } from "@/mcp/server";
 import { LATEST_YEAR } from "@/mcp/tax-data-registry";
 
@@ -227,6 +227,23 @@ describe("handleGet", () => {
       "income",
       "state",
     ]);
+  });
+
+  it("returns 400, not 500, for amounts past the cap", async () => {
+    const response = await get("income=1e300&state=oregon");
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.issues[0].param).toBe("income");
+  });
+});
+
+describe("withoutBody", () => {
+  it("keeps the status and headers and drops the body", async () => {
+    const response = withoutBody(json({ ok: true }, 400, false));
+    expect(response.status).toBe(400);
+    expect(response.headers.get("Content-Type")).toContain("application/json");
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.body).toBeNull();
   });
 });
 
