@@ -1,4 +1,4 @@
-import { NONE, STATE_INCOME } from "@/constants/tax_types";
+import { NONE, STATE_INCOME } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

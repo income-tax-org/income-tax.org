@@ -157,6 +157,7 @@ test("compare sits second in the navigation", async ({ page }) => {
     "City Taxes",
     "Support",
     "Disclaimer",
+    "API",
   ]);
 });
 

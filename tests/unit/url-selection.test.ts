@@ -7,7 +7,7 @@ import {
   buildURLWithParams,
   preserveQueryParams,
   withBasePath,
-} from "@/utils/base-path";
+} from "@/utils/url";
 
 function visit(url: string) {
   window.history.replaceState(null, "", url);

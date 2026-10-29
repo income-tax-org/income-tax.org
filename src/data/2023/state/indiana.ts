@@ -95,7 +95,7 @@ import {
   WHITLEY_COUNTY,
 } from "@/constants/cities";
 import { ALL } from "@/constants/filing-status";
-import { COUNTY_INCOME, STATE_INCOME } from "@/constants/tax_types";
+import { COUNTY_INCOME, STATE_INCOME } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

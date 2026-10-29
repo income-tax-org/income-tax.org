@@ -43,7 +43,7 @@ import {
   PERSONAL_EXEMPTION_CREDIT,
   PRESCHOOL_FOR_ALL,
   SUPPORTIVE_HOUSING_SERVICES,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import { BIRMINGHAM, PORTLAND } from "@/constants/cities";
 import {
   CITIES,

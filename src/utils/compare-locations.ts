@@ -1,4 +1,5 @@
 import { CITIES } from "@/constants";
+import { ALL_STATES } from "@/constants/states";
 import type { FilingStatus } from "@/constants/filing-status";
 import type { SalesTaxData, TaxData } from "@/types";
 import { calculate } from "./calculator";
@@ -6,6 +7,11 @@ import { standardDeductionFor } from "./standard-deduction";
 import type { Money } from "./money";
 import { subtract, toUnit } from "./money";
 import { defaultTaxableSpending, estimateSalesTax } from "./sales-tax";
+import {
+  dashToSnakeCase,
+  snakeToDashCase,
+  snakeToTitleCase,
+} from "./string-utils";
 
 /** A place to compare: a state, optionally narrowed to one of its cities. */
 export type ComparedLocation = {
@@ -42,6 +48,36 @@ export type ComparisonRow = {
 
 export function locationId({ state, city }: ComparedLocation): string {
   return city ? `${state}/${city}` : state;
+}
+
+export function labelFor({ state, city }: ComparedLocation): string {
+  return city
+    ? `${snakeToTitleCase(city)}, ${snakeToTitleCase(state)}`
+    : snakeToTitleCase(state);
+}
+
+/** Serialised into `?locations=` as `oregon/portland,texas`. */
+export function parseLocations(value: string | null): ComparedLocation[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [state, city = ""] = entry.split("/");
+      return { state: dashToSnakeCase(state), city: dashToSnakeCase(city) };
+    })
+    .filter((location) => ALL_STATES.includes(location.state));
+}
+
+export function serialiseLocations(locations: ComparedLocation[]): string {
+  return locations
+    .map(({ state, city }) =>
+      city
+        ? `${snakeToDashCase(state)}/${snakeToDashCase(city)}`
+        : snakeToDashCase(state),
+    )
+    .join(",");
 }
 
 /**

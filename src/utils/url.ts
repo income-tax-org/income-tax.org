@@ -167,11 +167,27 @@ export const PRESERVED_QUERY_PARAMS = ["income", "tables"] as const;
  * something else.
  */
 export function parseIncomeParam(value: string | null): number | null {
-  if (!value) {
+  return parseAmountParam(value, { allowZero: false });
+}
+
+/**
+ * Read a dollar amount off a URL, with the same strictness as
+ * `parseIncomeParam`. Zero is allowed by default, for fields like deductions
+ * where $0 is a meaningful choice.
+ */
+export function parseAmountParam(
+  value: string | null,
+  { allowZero = true }: { allowZero?: boolean } = {},
+): number | null {
+  // `Number("  ")` is 0, which would read a blank param as a deliberate $0.
+  if (!value?.trim()) {
     return null;
   }
-  const income = Number(value);
-  return Number.isFinite(income) && income > 0 ? income : null;
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) {
+    return null;
+  }
+  return amount > 0 || (allowZero && amount === 0) ? amount : null;
 }
 
 export function preserveQueryParams(

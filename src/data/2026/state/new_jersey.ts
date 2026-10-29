@@ -14,7 +14,7 @@ import {
   NJ_WORKFORCE_DEVELOPMENT,
   STATE_INCOME,
   STANDARD_DEDUCTION,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {
@@ -107,7 +107,7 @@ export default {
   [CITIES]: {
     // Newark's 1% payroll tax is real and is documented here for the tax
     // tables, but it is levied on the EMPLOYER and is deliberately never
-    // charged against a salary. See NON_WAGE_TAX_TYPES in constants/tax_types
+    // charged against a salary. See NON_WAGE_TAX_TYPES in constants/tax-types
     // for why a tax lives in the data without being calculated.
     //
     // N.J.S.A. 40:48C-15, as amended by P.L.2018, c.68, is titled "Collection

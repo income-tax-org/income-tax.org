@@ -27,11 +27,11 @@ import {
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import { ALL_STATES } from "@/constants/states";
 import { promises as fs } from "fs";
 import path from "path";
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import { resolveStandardDeduction } from "@/utils/standard-deduction";
 import Joi from "joi";
 

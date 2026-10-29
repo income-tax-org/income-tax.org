@@ -8,7 +8,7 @@ The web pages work out their results in the browser with JavaScript, so fetching
 
 - [calculate](https://income-tax.org/api/calculate?income=120000&state=new_york&city=new_york_city): take-home pay and every tax for an annual gross income. Required: `income`, `state`. Optional: `city`, `year`, `filing_status` (single, married, married_separately, head_of_household), `retirement_contribution` (pre-tax 401(k)/IRA dollars), `federal_deductions`, `state_deductions` (default: standard deduction), `exempt_taxes` (comma-separated `scope:tax`), `pay_frequency` (weekly, biweekly, semi_monthly, monthly).
 - [target](https://income-tax.org/api/target?take_home=6000&target_period=monthly&state=texas): the gross income needed for a take-home goal. Required: `take_home`, `state`. `target_period` is annual (default) or a pay frequency. Accepts the same optional parameters as calculate.
-- [tax_tables](https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=single): brackets, rates, standard deductions and the 401(k) limit. All optional: `year`, `state` (omit for federal only), `city`, `filing_status`, `tax_types` (comma-separated).
+- [tax_tables](https://income-tax.org/api/tax-tables?state=oregon&city=portland&filing_status=single): brackets, rates, standard deductions, the 401(k) limit and the state's sales tax rates. All optional: `year`, `state` (omit for federal only), `city`, `filing_status`, `tax_types` (comma-separated; `sales_tax` for sales tax alone). Sales tax rates that changed during the year are listed per period; a year without sales tax data says so rather than reporting 0%.
 
 Every calculate and target response includes `links.tax_tables`, a ready-made URL for the tax tables of the same location: follow it to see the brackets behind a result. Tax tables are also static files at `/data/tax-tables/{year}/{state}/{city}.json` (dash-case; drop city for a state, or both for federal only), e.g. [2026 Portland, OR](https://income-tax.org/data/tax-tables/2026/oregon/portland.json). States and cities are snake_case (`new_york`, `new_york_city`). Invalid input returns HTTP 400 with the valid values. Amounts are US dollars per year unless labelled per paycheck.
 
@@ -25,5 +25,5 @@ Every calculate and target response includes `links.tax_tables`, a ready-made UR
 
 ## Optional
 
-- [Tax tables](https://income-tax.org/tax-tables/): browsable federal, state and city tax tables.
+- [Tax tables](https://income-tax.org/tax-tables/): browsable federal, state and city tax tables, and state and city sales tax rates.
 - [Cities with income taxes](https://income-tax.org/city-taxes/): every city and county with its own taxes.

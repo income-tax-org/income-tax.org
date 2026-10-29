@@ -13,7 +13,7 @@ import type { FilingStatus } from "@/constants/filing-status";
 import { MONTHLY, PAYCHECK_FREQUENCIES } from "@/constants/paycheck-frequency";
 import type { PaycheckFrequency } from "@/constants/paycheck-frequency";
 import { ALL_STATES } from "@/constants/states";
-import { YEARS } from "./tax-data-registry";
+import { YEARS } from "@/data-loaders/registry";
 
 export const ANNUAL = "annual";
 
@@ -146,7 +146,7 @@ export const taxTablesInput = z.object({
     .string()
     .optional()
     .describe(
-      "Optional city or county, e.g. new_york_city, to include its local tables. Without one, the response lists the state's cities so you can ask again.",
+      "Optional city or county, e.g. new_york_city, to include its local tables, or a city with its own sales tax rate, e.g. seattle. Without one, the response lists the state's cities so you can ask again.",
     ),
   filing_status: z
     .enum(FILING_STATUSES as NonEmpty)
@@ -158,7 +158,7 @@ export const taxTablesInput = z.object({
     .array(z.string())
     .optional()
     .describe(
-      "Return only these tax types, e.g. ['federal_income', 'state_income']. Omit for all. Unknown keys return the valid ones.",
+      "Return only these tax types, e.g. ['federal_income', 'state_income'], or ['sales_tax'] for the state's sales tax rates alone. Omit for all. Unknown keys return the valid ones.",
     ),
 });
 

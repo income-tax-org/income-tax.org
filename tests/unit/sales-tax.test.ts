@@ -2,21 +2,24 @@ import { describe, it, expect } from "vitest";
 import {
   defaultTaxableSpending,
   estimateSalesTax,
+  localSalesTaxRates,
   salesTaxCitiesFor,
+  salesTaxPeriods,
   salesTaxRatesFor,
   usesAverageLocalRate,
 } from "@/utils/sales-tax";
 import { toUnit } from "@/utils/money";
 import { HEAD_OF_HOUSEHOLD, MARRIED, SINGLE } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
-import { LOCAL_SALES_TAX, STATE_SALES_TAX } from "@/constants/tax_types";
-import { SEATTLE, TACOMA } from "@/constants/cities";
+import { LOCAL_SALES_TAX, STATE_SALES_TAX } from "@/constants/tax-types";
+import { ARVADA, SEATTLE, TACOMA } from "@/constants/cities";
 import { CITIES } from "@/constants";
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import type { SalesTaxData } from "@/types";
 import washington2025 from "@/data/2025/sales-tax/state/washington";
 import washington2026 from "@/data/2026/sales-tax/state/washington";
 import oregon2026 from "@/data/2026/sales-tax/state/oregon";
+import colorado2026 from "@/data/2026/sales-tax/state/colorado";
 import alabama2025 from "@/data/2025/sales-tax/state/alabama";
 import alaska2025 from "@/data/2025/sales-tax/state/alaska";
 
@@ -212,5 +215,38 @@ describe("sales tax coverage", () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+});
+
+describe("salesTaxPeriods", () => {
+  it("gives one period for a rate that held all year", () => {
+    expect(salesTaxPeriods(salesTaxRatesFor(washington, SEATTLE))).toEqual([
+      { firstMonth: 0, lastMonth: 11, rate: 10.55 },
+    ]);
+  });
+
+  it("gives a period per run of months where the rate changed", () => {
+    // Tacoma's local rate rose on April 1 and again on July 1, 2026.
+    expect(salesTaxPeriods(localSalesTaxRates(washington, TACOMA))).toEqual([
+      { firstMonth: 0, lastMonth: 2, rate: 3.8 },
+      { firstMonth: 3, lastMonth: 5, rate: 3.9 },
+      { firstMonth: 6, lastMonth: 11, rate: 4 },
+    ]);
+  });
+
+  it("follows a change on a month that does not start a quarter", () => {
+    const rates = [...Array(4).fill(8.1), ...Array(8).fill(8.6)];
+    expect(salesTaxPeriods(rates)).toEqual([
+      { firstMonth: 0, lastMonth: 3, rate: 8.1 },
+      { firstMonth: 4, lastMonth: 11, rate: 8.6 },
+    ]);
+  });
+
+  it("rounds away the float error of adding two rates", () => {
+    // 2.9 + 5.06 is 7.959999999999999 in floating point.
+    const colorado = colorado2026 as SalesTaxData;
+    expect(salesTaxPeriods(salesTaxRatesFor(colorado, ARVADA))).toEqual([
+      { firstMonth: 0, lastMonth: 11, rate: 7.96 },
+    ]);
   });
 });

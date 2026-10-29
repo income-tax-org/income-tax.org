@@ -1,10 +1,11 @@
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import type {
   CityPageParams,
   StatePageParams,
   YearPageParams,
 } from "@/types/page";
 import path from "path";
+import { getTaxTablesStatesAndCities } from "./get-page-data";
 import { snakeToDashCase } from "./string-utils";
 
 export async function getYearPageParams(): Promise<YearPageParams[]> {
@@ -60,4 +61,18 @@ export async function getCityPageParams(): Promise<CityPageParams[]> {
   }
 
   return yearsStatesAndCities;
+}
+
+/** City pages for the tax tables, which also list sales tax cities. */
+export async function getTaxTablesCityPageParams(): Promise<CityPageParams[]> {
+  const statesAndCitiesForYear = await getTaxTablesStatesAndCities();
+  return Object.entries(statesAndCitiesForYear).flatMap(([year, states]) =>
+    Object.entries(states).flatMap(([state, { cities }]) =>
+      cities.map((city) => ({
+        year,
+        state: snakeToDashCase(state),
+        city: snakeToDashCase(city),
+      })),
+    ),
+  );
 }

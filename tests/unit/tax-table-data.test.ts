@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  salesTaxToTable,
   standardDeductionMapToTable,
   tableDataFromTaxData,
 } from "@/utils/tax-table-data";
@@ -10,9 +11,11 @@ import newYork2025 from "@/data/2025/state/new_york";
 import newJersey2026 from "@/data/2026/state/new_jersey";
 import oregon2026 from "@/data/2026/state/oregon";
 import texas2025 from "@/data/2025/state/texas";
-import { STATE_INCOME } from "@/constants/tax_types";
+import { STATE_INCOME } from "@/constants/tax-types";
 import { CITIES } from "@/constants";
-import type { TaxData } from "@/types";
+import type { SalesTaxData, TaxData } from "@/types";
+import washingtonSalesTax2026 from "@/data/2026/sales-tax/state/washington";
+import oregonSalesTax2026 from "@/data/2026/sales-tax/state/oregon";
 
 const everyRowMatchesHeaderCount = (table: {
   headers: string[];
@@ -252,5 +255,84 @@ describe("standardDeductionMapToTable", () => {
         "$8,500 less $175 per $500 over $26,000, and never below $5,000",
       );
     });
+  });
+});
+
+describe("salesTaxToTable", () => {
+  const washington = washingtonSalesTax2026 as SalesTaxData;
+
+  it("says a year has no data rather than showing 0%", () => {
+    const table = salesTaxToTable("washington_sales_tax", null, "2024", "");
+    expect(table.headers).toEqual(["No sales tax data for 2024"]);
+    expect(table.rows).toEqual([]);
+  });
+
+  it("shows a state whose data says it has no sales tax as no taxes", () => {
+    const table = salesTaxToTable(
+      "oregon_sales_tax",
+      oregonSalesTax2026 as SalesTaxData,
+      "2026",
+      "",
+    );
+    expect(table.headers).toEqual(["No Taxes"]);
+    expect(table.rows).toEqual([]);
+  });
+
+  it("lists the state average and every city the file lists", () => {
+    const table = salesTaxToTable(
+      "washington_sales_tax",
+      washington,
+      "2026",
+      "",
+    );
+    expect(table.headers).toEqual([
+      "Location",
+      "State Rate",
+      "Local Rate",
+      "Combined Rate",
+    ]);
+    expect(table.rows).toHaveLength(
+      1 + Object.keys(washington[CITIES] ?? {}).length,
+    );
+    expect(everyRowMatchesHeaderCount(table)).toBe(true);
+    // The Tax Foundation's average rose for the second half of the year.
+    expect(table.rows[0]).toEqual([
+      "State average",
+      "6.5%",
+      "3.01% (Jan–Jun)\n3.07% (Jul–Dec)",
+      "9.51% (Jan–Jun)\n9.57% (Jul–Dec)",
+    ]);
+    expect(table.rows).toContainEqual(["Seattle", "6.5%", "4.05%", "10.55%"]);
+    expect(table.rows).toContainEqual([
+      "Tacoma",
+      "6.5%",
+      "3.8% (Jan–Mar)\n3.9% (Apr–Jun)\n4% (Jul–Dec)",
+      "10.3% (Jan–Mar)\n10.4% (Apr–Jun)\n10.5% (Jul–Dec)",
+    ]);
+    expect(table.note).toBe(
+      "Rates that changed during 2026 are listed with the months each applied.",
+    );
+  });
+
+  it("shows only the city picked, and no note when nothing changed", () => {
+    const table = salesTaxToTable(
+      "seattle_sales_tax",
+      washington,
+      "2026",
+      "seattle",
+    );
+    expect(table.rows).toEqual([["Seattle", "6.5%", "4.05%", "10.55%"]]);
+    expect(table.note).toBeUndefined();
+  });
+
+  it("labels a city the file does not list as the state average", () => {
+    const table = salesTaxToTable(
+      "ellensburg_sales_tax",
+      washington,
+      "2026",
+      "ellensburg",
+    );
+    expect(table.rows[0][0]).toBe("Ellensburg (state average)");
+    expect(table.rows[0][3]).toBe("9.51% (Jan–Jun)\n9.57% (Jul–Dec)");
   });
 });

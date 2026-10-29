@@ -4,7 +4,7 @@ import {
   FEDERAL_TAX_SUBTRACTION,
   PERSONAL_EXEMPTION_CREDIT,
   STANDARD_DEDUCTION,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type {
   DeductionBand,
   StandardDeduction,

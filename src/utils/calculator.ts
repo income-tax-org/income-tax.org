@@ -54,13 +54,17 @@ import {
   SOCIAL_SECURITY,
   STATE_INCOME,
   WASHINGTON_CARES_FUND,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import {
   CITIES,
+  BASE_AMOUNT_SCHEDULE,
   CITY_SCOPE,
   EXEMPT,
+  FLAT_FEE_SCHEDULE,
   GROSS_INCOME_BASIS,
   INFINITY,
+  MARGINAL_SCHEDULE,
+  RATE_ON_TOTAL_SCHEDULE,
   STATE_INCOME_TAX_BASIS,
   TAXABLE_INCOME_BASIS,
   TAX_FREQUENCY_PERIODS_PER_YEAR,
@@ -480,6 +484,26 @@ export function scheduleForFilingStatus(
   const byStatus = taxTypeData as Record<string, BracketSchedule | undefined>;
   const schedule = byStatus[ALL] ?? byStatus[filingStatus];
   return Array.isArray(schedule) ? schedule : undefined;
+}
+
+export type ScheduleKind =
+  | typeof MARGINAL_SCHEDULE
+  | typeof RATE_ON_TOTAL_SCHEDULE
+  | typeof BASE_AMOUNT_SCHEDULE
+  | typeof FLAT_FEE_SCHEDULE;
+
+/**
+ * Which arithmetic a schedule takes, tested in the order
+ * calculateTaxesPerBracket dispatches on.
+ *
+ * The tax tables, the API's `kind` and the bracket ladder all read this, so
+ * none of them can show a schedule as marginal that is charged some other way.
+ */
+export function scheduleKind(brackets: BracketSchedule): ScheduleKind {
+  if (isFlatFeeSchedule(brackets)) return FLAT_FEE_SCHEDULE;
+  if (isRateLookupSchedule(brackets)) return RATE_ON_TOTAL_SCHEDULE;
+  if (isBaseAmountSchedule(brackets)) return BASE_AMOUNT_SCHEDULE;
+  return MARGINAL_SCHEDULE;
 }
 
 export function isFlatFeeSchedule(

@@ -1,6 +1,6 @@
 import { INFINITY } from "@/constants";
 import { ALL } from "@/constants/filing-status";
-import { STATE_INCOME } from "@/constants/tax_types";
+import { STATE_INCOME } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

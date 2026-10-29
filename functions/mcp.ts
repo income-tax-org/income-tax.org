@@ -1,8 +1,8 @@
 // MCP server at /mcp: Streamable HTTP, stateless, tools only.
 
 import { createMcpHandler } from "@modelcontextprotocol/server";
-import { preflight, withCors } from "@/mcp/http";
-import { createServer } from "@/mcp/server";
+import { preflight, withCors } from "@/api/http";
+import { createServer } from "@/api/mcp-server";
 
 // Only reached if the SDK ever calls the factory without the request.
 const FALLBACK_SITE_URL = "https://income-tax.org";

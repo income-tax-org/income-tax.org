@@ -12,7 +12,7 @@ import {
   MEDICARE,
   SOCIAL_SECURITY,
   STANDARD_DEDUCTION,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

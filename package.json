@@ -6,8 +6,10 @@
   "private": false,
   "license": "MIT",
   "scripts": {
-    "go": "npm run lint:fix && npm run build && node open.js 3001 && npm run start",
-    "dev": "node open.js 3001 && next dev -p 3001",
+    "go": "npm run lint:fix && npm run build && node scripts/open-browser.js 3001 && npm run start",
+    "predev": "npm run generate-tax-data-registry",
+    "dev": "node scripts/open-browser.js 3001 && next dev -p 3001",
+    "predev:test": "npm run generate-tax-data-registry",
     "dev:test": "NODE_ENV=test next dev -p 3001",
     "build": "next build",
     "postbuild": "next-sitemap && node scripts/update-manifest.js && npm run generate-static-tax-tables",

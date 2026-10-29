@@ -21,8 +21,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { calculate } from "@/utils/calculator";
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
-import type { TaxDataByYear } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
+import type { TaxDataByYear } from "@/data-loaders/read-from-disk";
 import { FILING_STATUSES } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
 import { CITIES } from "@/constants";
@@ -31,7 +31,7 @@ import {
   NONE,
   STANDARD_DEDUCTION,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 import type { Money } from "@/utils/money";
 import { toUnit } from "@/utils/money";

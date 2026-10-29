@@ -29,7 +29,7 @@ import {
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { SalesTaxData } from "@/types";
 
 // Colorado Department of Revenue: DR 1002 'Colorado Sales/Use Tax Rates',

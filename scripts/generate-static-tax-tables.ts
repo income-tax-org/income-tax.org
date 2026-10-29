@@ -1,6 +1,6 @@
 // Write every tax table into out/ as a static JSON file.
 //
-// Runs after `next build` (postbuild). See src/mcp/static-tax-tables.ts for
+// Runs after `next build` (postbuild). See src/api/static-tax-tables.ts for
 // why: the tables depend on year and location only, so they need no Function
 // and cost nothing to serve. Each file holds every filing status -- the same
 // response as /api/tax-tables with year, state and city, and nothing else.
@@ -10,9 +10,10 @@ import path from "path";
 
 import { CITIES } from "@/constants";
 import { SITE_URL } from "@/constants/pages";
-import { staticTaxTablesPath } from "@/mcp/static-tax-tables";
-import { TAX_DATA_REGISTRY, YEARS } from "@/mcp/tax-data-registry";
-import { runTaxTables } from "@/mcp/tax-tables";
+import { staticTaxTablesPath } from "@/api/static-tax-tables";
+import { salesTaxCitiesFor } from "@/utils/sales-tax";
+import { TAX_DATA_REGISTRY, YEARS } from "@/data-loaders/registry";
+import { runTaxTables } from "@/api/tax-tables";
 
 const outDirectory = path.join(process.cwd(), "out");
 
@@ -28,13 +29,19 @@ async function main() {
   for (const year of YEARS) {
     await write(year);
     count++;
-    for (const [state, load] of Object.entries(
-      TAX_DATA_REGISTRY[year].states,
-    )) {
+    const registry = TAX_DATA_REGISTRY[year];
+    for (const [state, load] of Object.entries(registry.states)) {
       await write(year, state);
       count++;
       const { default: stateData } = await load();
-      for (const city of Object.keys(stateData[CITIES] ?? {})) {
+      // Cities with only a sales tax rate of their own, like Seattle, get a
+      // file too: the tax-tables page links to them.
+      const salesTax = await registry.salesTax[state]?.();
+      const cities = new Set([
+        ...Object.keys(stateData[CITIES] ?? {}),
+        ...salesTaxCitiesFor(salesTax?.default ?? null),
+      ]);
+      for (const city of Array.from(cities)) {
         await write(year, state, city);
         count++;
       }

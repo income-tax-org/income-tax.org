@@ -10,8 +10,13 @@ import {
   MAX_401K_CONTRIBUTION,
   NON_TAX_DATA_KEYS,
   NON_WAGE_TAX_TYPES,
-} from "@/constants/tax_types";
-import type { TaxData, TaxResults, TaxResultsWithCities } from "@/types";
+} from "@/constants/tax-types";
+import type {
+  SalesTaxData,
+  TaxData,
+  TaxResults,
+  TaxResultsWithCities,
+} from "@/types";
 import {
   calculate,
   getPaycheckByFrequency,
@@ -27,10 +32,11 @@ import {
   withExemptionCreditPinned,
 } from "@/utils/standard-deduction";
 import { snakeToDashCase } from "@/utils/string-utils";
+import { salesTaxCitiesFor } from "@/utils/sales-tax";
 import { solveForIncome } from "@/utils/target-income";
 import type { CalculateInput, TargetInput } from "./inputs";
 import { ANNUAL, normalizeKey } from "./inputs";
-import { LATEST_YEAR, TAX_DATA_REGISTRY, YEARS } from "./tax-data-registry";
+import { LATEST_YEAR, TAX_DATA_REGISTRY, YEARS } from "@/data-loaders/registry";
 import { staticTaxTablesPath } from "./static-tax-tables";
 
 /** A request that is well-formed but names something the data does not have. */
@@ -80,17 +86,28 @@ export type Location = {
   city: string;
   /** Cities in the state with local tax data. */
   cities: string[];
+  /**
+   * Only with `withSalesTax`, and a state: the state's sales tax file, or
+   * null where the year has none.
+   */
+  salesTax?: SalesTaxData | null;
 };
 
 /**
  * Load the federal data for a year and, if one is named, a state's, checking
  * the city against what that state's data actually has.
+ *
+ * `withSalesTax` also loads the state's sales tax file and accepts its cities,
+ * like Seattle, which have a sales tax rate but no local income tax.
  */
-export async function loadLocation(params: {
-  year?: string;
-  state?: string;
-  city?: string;
-}): Promise<Location> {
+export async function loadLocation(
+  params: {
+    year?: string;
+    state?: string;
+    city?: string;
+  },
+  { withSalesTax = false }: { withSalesTax?: boolean } = {},
+): Promise<Location> {
   const year = params.year ?? LATEST_YEAR;
   const registry = TAX_DATA_REGISTRY[year];
   if (!registry) {
@@ -107,24 +124,39 @@ export async function loadLocation(params: {
   if (params.city && !state) {
     throw new InputError("A city needs a state.");
   }
-  const [{ default: federal }, stateModule] = await Promise.all([
-    registry.federal(),
-    loadState?.(),
-  ]);
+  const loadSalesTax =
+    withSalesTax && state ? registry.salesTax[state] : undefined;
+  const [{ default: federal }, stateModule, salesTaxModule] = await Promise.all(
+    [registry.federal(), loadState?.(), loadSalesTax?.()],
+  );
   const stateData = stateModule?.default;
+  const salesTax =
+    withSalesTax && state ? salesTaxModule?.default ?? null : undefined;
 
   const cities = Object.keys(stateData?.[CITIES] ?? {});
+  const validCities = salesTax
+    ? Array.from(new Set([...cities, ...salesTaxCitiesFor(salesTax)])).sort()
+    : cities;
   const city = params.city ? normalizeKey(params.city) : "";
-  if (city && !cities.includes(city)) {
+  if (city && !validCities.includes(city)) {
+    const kind = withSalesTax ? "local or sales tax" : "local tax";
     throw new InputError(
-      cities.length
-        ? `"${params.city}" has no local tax data in ${state}.`
-        : `${state} has no cities with local tax data; omit city.`,
-      cities,
+      validCities.length
+        ? `"${params.city}" has no ${kind} data in ${state}.`
+        : `${state} has no cities with ${kind} data; omit city.`,
+      validCities,
     );
   }
 
-  return { year, federal, state, stateData, city, cities };
+  return {
+    year,
+    federal,
+    state,
+    stateData,
+    city,
+    cities,
+    ...(salesTax !== undefined && { salesTax }),
+  };
 }
 
 async function resolve(input: Common): Promise<Resolved> {

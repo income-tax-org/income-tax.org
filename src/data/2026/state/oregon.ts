@@ -18,7 +18,7 @@ import {
   STANDARD_DEDUCTION,
   STATE_INCOME,
   SUPPORTIVE_HOUSING_SERVICES,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

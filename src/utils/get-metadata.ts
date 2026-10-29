@@ -9,7 +9,7 @@ import {
 } from "@/constants/pages";
 import type { Metadata } from "next";
 import { snakeToTitleCase } from "./string-utils";
-import { getLatestDataYear } from "./get-latest-year";
+import { LATEST_YEAR } from "@/data-loaders/registry";
 
 const defaultUrl = "https://income-tax.org";
 
@@ -90,7 +90,7 @@ function buildCanonicalUrl(
   city?: string,
 ): string {
   let path = route;
-  const isRouteRoot = year === getLatestDataYear() && !state && !city;
+  const isRouteRoot = year === LATEST_YEAR && !state && !city;
   if (year && !isRouteRoot) {
     path += `/${year}`;
     if (state) {
@@ -110,6 +110,12 @@ export function getPageSpecificMetadata(
   year?: string,
   state?: string,
   city?: string,
+  {
+    salesTaxOnly = false,
+  }: {
+    /** A tax-tables city with a sales tax rate but no local income taxes. */
+    salesTaxOnly?: boolean;
+  } = {},
 ): Metadata {
   // Copy rather than alias. defaultOpenGraph is module-level and the fields
   // below are assigned, so sharing the reference lets one page's metadata
@@ -168,6 +174,11 @@ export function getPageSpecificMetadata(
         openGraph.title = `${year} ${snakeToTitleCase(state)} ${TAX_TABLES.name}`;
         openGraph.images = `/og-images/tax-tables/${state}.png`;
       }
+    } else if (salesTaxOnly) {
+      description = `Tables of federal and state income tax rates and the sales tax rate for the year ${year} in ${snakeToTitleCase(city)}, ${snakeToTitleCase(state as string)}.`;
+      openGraph.title = `${year} ${snakeToTitleCase(city)}, ${snakeToTitleCase(state as string)} ${TAX_TABLES.name}`;
+      // generate-og-images.ts only captures cities with local income taxes.
+      openGraph.images = `/og-images/tax-tables/${state}.png`;
     } else {
       description = `Tables of federal, state, and city income tax rates for the year ${year} in ${snakeToTitleCase(city)}, ${snakeToTitleCase(state as string)}.`;
       openGraph.title = `${year} ${snakeToTitleCase(city)}, ${snakeToTitleCase(state as string)} ${TAX_TABLES.name}`;

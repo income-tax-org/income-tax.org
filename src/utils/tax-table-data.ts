@@ -1,25 +1,34 @@
-import { ALL, FILING_STATUSES } from "@/constants/filing-status";
+import { FILING_STATUSES } from "@/constants/filing-status";
 import {
+  BASE_AMOUNT_SCHEDULE,
+  FLAT_FEE_SCHEDULE,
   INFINITY,
+  RATE_ON_TOTAL_SCHEDULE,
   STATE_INCOME_TAX_BASIS,
   TAX_FREQUENCY_PERIODS_PER_YEAR,
 } from "@/constants";
-import { NONE } from "@/constants/tax_types";
+import { NONE } from "@/constants/tax-types";
 import type {
   BracketSchedule,
   DeductionBand,
   FlatFeeBracket,
   RateBracket,
+  SalesTaxData,
   StandardDeduction,
   StandardDeductionByFilingStatus,
   TaxData,
   TaxFrequency,
 } from "@/types";
+import { scheduleForFilingStatus, scheduleKind } from "./calculator";
+import type { SalesTaxPeriod } from "./sales-tax";
 import {
-  isBaseAmountSchedule,
-  isFlatFeeSchedule,
-  isRateLookupSchedule,
-} from "./calculator";
+  localSalesTaxRates,
+  salesTaxCitiesFor,
+  salesTaxPeriods,
+  salesTaxRatesFor,
+  stateSalesTaxRates,
+  usesAverageLocalRate,
+} from "./sales-tax";
 import { isBandedDeduction } from "./standard-deduction";
 import { snakeToTitleCase, toSnakeCase } from "./string-utils";
 import {
@@ -33,6 +42,8 @@ export type Table = {
   name: string;
   headers: string[];
   rows: (string | number)[][];
+  /** Shown under the table, for what the cells alone cannot say. */
+  note?: string;
 };
 
 type BracketColumn = {
@@ -47,25 +58,10 @@ type BracketColumn = {
  * rather than in a single unlabelled column.
  */
 function bracketColumns(taxData: TaxData[string]): BracketColumn[] {
-  if (!taxData || typeof taxData !== "object") {
-    return [];
-  }
-  const byStatus = taxData as Record<string, BracketSchedule | undefined>;
-
-  const all = byStatus[ALL];
-  if (Array.isArray(all)) {
-    return FILING_STATUSES.map((status) => ({
-      header: snakeToTitleCase(status),
-      brackets: all,
-    }));
-  }
-
-  return FILING_STATUSES.filter((status) =>
-    Array.isArray(byStatus[status]),
-  ).map((status) => ({
-    header: snakeToTitleCase(status),
-    brackets: byStatus[status] as BracketSchedule,
-  }));
+  return FILING_STATUSES.flatMap((status) => {
+    const brackets = scheduleForFilingStatus(taxData, status);
+    return brackets ? [{ header: snakeToTitleCase(status), brackets }] : [];
+  });
 }
 
 export function tableDataFromTaxData(
@@ -107,7 +103,8 @@ export function tableDataFromTaxData(
   const rowIndexes = Array.from({ length: rowCount }, (_, index) => index);
 
   // A schedule is uniformly fees or uniformly rates, so the first column decides.
-  if (isFlatFeeSchedule(columns[0].brackets)) {
+  const kind = scheduleKind(columns[0].brackets);
+  if (kind === FLAT_FEE_SCHEDULE) {
     return {
       name,
       headers: columns.map((column) => column.header),
@@ -138,9 +135,9 @@ export function tableDataFromTaxData(
   // A base-amount schedule's rate is only half the story: Ohio charges "$342.00
   // plus 2.750% of the amount in excess of $26,050", and showing the 2.75%
   // alone is what understated it in the first place.
-  const isBaseAmount = isBaseAmountSchedule(columns[0].brackets);
+  const isBaseAmount = kind === BASE_AMOUNT_SCHEDULE;
   headers.push(
-    isRateLookupSchedule(columns[0].brackets)
+    kind === RATE_ON_TOTAL_SCHEDULE
       ? "Rate (on all wages)"
       : isBaseAmount
         ? "Tax"
@@ -326,5 +323,104 @@ export function standardDeductionMapToTable(
     name: toSnakeCase(name),
     headers: ["Filing Status", "Income", "Deduction"],
     rows,
+  };
+}
+
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/**
+ * A sales tax rate as it was charged: "6.5%" where it held all year, and a
+ * line per run of months where it changed. Tacoma's 2026 local rate reads
+ * "3.8% (Jan–Mar)", "3.9% (Apr–Jun)", "4% (Jul–Dec)"; averaging it into one
+ * figure would print a rate that was never charged.
+ */
+function formatSalesTaxRate(periods: SalesTaxPeriod[]): string {
+  if (periods.length === 1) {
+    return `${periods[0].rate}%`;
+  }
+  return periods
+    .map(({ firstMonth, lastMonth, rate }) => {
+      const months =
+        firstMonth === lastMonth
+          ? MONTH_NAMES[firstMonth]
+          : `${MONTH_NAMES[firstMonth]}–${MONTH_NAMES[lastMonth]}`;
+      return `${rate}% (${months})`;
+    })
+    .join("\n");
+}
+
+/**
+ * A state's general sales tax: its rate, the local rate on top and the two
+ * combined, for every city the file lists, or for the one city picked.
+ *
+ * `salesTax` is null where the year has no file for the state, and the table
+ * says so rather than showing 0%. Oregon has no sales tax; a state with no
+ * file has simply not been collected for that year.
+ */
+export function salesTaxToTable(
+  name: string,
+  salesTax: SalesTaxData | null,
+  year: string,
+  city: string,
+): Table {
+  if (!salesTax) {
+    return { name, headers: [`No sales tax data for ${year}`], rows: [] };
+  }
+
+  const cities = salesTaxCitiesFor(salesTax).sort();
+  if (
+    !cities.length &&
+    salesTaxRatesFor(salesTax, "").every((rate) => rate === 0)
+  ) {
+    return { name, headers: ["No Taxes"], rows: [] };
+  }
+
+  // "Seattle (state average)" for a picked city the file does not list,
+  // as the comparison labels it. Where the average is zero it is exact, and
+  // the city needs no qualifier.
+  const label = (location: string) => {
+    if (!location) {
+      return usesAverageLocalRate(salesTax, "") ? "State average" : "Statewide";
+    }
+    const title = snakeToTitleCase(location);
+    return usesAverageLocalRate(salesTax, location)
+      ? `${title} (state average)`
+      : title;
+  };
+
+  const statePeriods = salesTaxPeriods(stateSalesTaxRates(salesTax));
+  let changedDuringYear = statePeriods.length > 1;
+  const rows = (city ? [city] : ["", ...cities]).map((location) => {
+    const local = salesTaxPeriods(localSalesTaxRates(salesTax, location));
+    const combined = salesTaxPeriods(salesTaxRatesFor(salesTax, location));
+    changedDuringYear ||= local.length > 1 || combined.length > 1;
+    return [
+      label(location),
+      formatSalesTaxRate(statePeriods),
+      formatSalesTaxRate(local),
+      formatSalesTaxRate(combined),
+    ];
+  });
+
+  return {
+    name,
+    headers: ["Location", "State Rate", "Local Rate", "Combined Rate"],
+    rows,
+    ...(changedDuringYear && {
+      note: `Rates that changed during ${year} are listed with the months each applied.`,
+    }),
   };
 }

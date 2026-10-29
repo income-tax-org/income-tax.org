@@ -18,7 +18,7 @@ import {
   STANDARD_DEDUCTION,
   STATE_INCOME,
   COLORADO_FAMLI,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

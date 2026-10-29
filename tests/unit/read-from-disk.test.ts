@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 
 const DATA_DIR = process.cwd() + "/src/data";
 

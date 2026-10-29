@@ -33,7 +33,7 @@
 /llms.txt
   Access-Control-Allow-Origin: *
 
-# Static tax tables (see src/mcp/static-tax-tables.ts). They change only when
+# Static tax tables (see src/api/static-tax-tables.ts). They change only when
 # a deploy changes the data, so an hour at the edge is safe.
 /data/tax-tables/*
   Access-Control-Allow-Origin: *

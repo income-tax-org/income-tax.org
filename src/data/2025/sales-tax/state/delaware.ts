@@ -1,4 +1,4 @@
-import { LOCAL_SALES_TAX, STATE_SALES_TAX } from "@/constants/tax_types";
+import { LOCAL_SALES_TAX, STATE_SALES_TAX } from "@/constants/tax-types";
 import type { SalesTaxData } from "@/types";
 
 // Delaware has no state or local sales tax (it levies a gross receipts tax on

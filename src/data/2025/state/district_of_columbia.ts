@@ -10,7 +10,7 @@ import {
   DC_PAID_FAMILY_LEAVE,
   STANDARD_DEDUCTION,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {
@@ -80,7 +80,7 @@ export default {
   // worker. This is the Newark payroll-tax defect from the 2026-09-07 audit,
   // in a second place: charging it costs a DC filer $750/yr at $100,000.
   // The fix is to list DC_PAID_FAMILY_LEAVE in NON_WAGE_TAX_TYPES
-  // (src/constants/tax_types.ts) so the tax tables still document it and the
+  // (src/constants/tax-types.ts) so the tax tables still document it and the
   // calculator stops charging it. That file is outside this task's ownership,
   // so the change has been reported rather than made -- do not "fix" this by
   // deleting the entry, which would lose a real DC programme from the tables.

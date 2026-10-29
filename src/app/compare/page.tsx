@@ -1,4 +1,4 @@
-import Compare from "@/components/Compare";
+import Compare from "@/components/compare/Compare";
 import Wrapper from "@/components/Wrapper";
 import { COMPARE } from "@/constants/pages";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";

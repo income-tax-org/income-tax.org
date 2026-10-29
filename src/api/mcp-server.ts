@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { CalculateInput, TargetInput, TaxTablesInput } from "./inputs";
 import { calculateInput, targetInput, taxTablesInput } from "./inputs";
 import { InputError, runCalculate, runTarget } from "./run";
-import { YEARS } from "./tax-data-registry";
+import { YEARS } from "@/data-loaders/registry";
 import { runTaxTables } from "./tax-tables";
 
 const SHARED_NOTES = `All amounts are US dollars per year unless labelled per_paycheck. FICA and state payroll programs are charged on gross wages: a 401(k)/IRA contribution and deductions lower income tax only. "totals.federal_including_fica" includes Social Security and Medicare; "totals.state_including_local" includes city/county taxes. Tax data covers ${YEARS.join(", ")}. Estimates only, not tax advice.`;
@@ -83,7 +83,7 @@ export function createServer(siteUrl: string) {
     "tax_tables",
     {
       title: "Look up tax brackets and rates",
-      description: `Return the tax schedules the calculator uses: income tax brackets, payroll taxes (Social Security, Medicare, state programs), local taxes, standard deductions and the 401(k) limit, for a year, state and optional city. Use it to explain rates or brackets, or to discover a state's cities and tax-type keys. Each schedule has a kind and a basis; how_to_read explains them. For dollar amounts at a specific income use calculate, which applies every rule correctly. Tax data covers ${YEARS.join(", ")}.`,
+      description: `Return the tax schedules the calculator uses: income tax brackets, payroll taxes (Social Security, Medicare, state programs), local taxes, standard deductions, the 401(k) limit and the state's sales tax rates, for a year, state and optional city. Use it to explain rates or brackets, or to discover a state's cities and tax-type keys. Each schedule has a kind and a basis; how_to_read explains them. For dollar amounts at a specific income use calculate, which applies every rule correctly. Tax data covers ${YEARS.join(", ")}.`,
       inputSchema: taxTablesInput,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

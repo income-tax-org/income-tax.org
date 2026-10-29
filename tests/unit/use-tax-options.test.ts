@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useGetTaxOptions } from "@/utils/get-tax-options";
+import { useTaxOptions } from "@/hooks/use-tax-options";
 import type { TaxData } from "@/types";
 import {
   MAX_401K_CONTRIBUTION,
@@ -12,7 +12,7 @@ import {
   FEDERAL_INCOME,
   SOCIAL_SECURITY,
   ART_TAX,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import { CITIES, CITY_SCOPE, FEDERAL_SCOPE, STATE_SCOPE } from "@/constants";
 import { EMPTY_STANDARD_DEDUCTION_MAP } from "@/constants/filing-status";
 
@@ -31,7 +31,7 @@ function options(
   USACity = "",
 ) {
   const { result } = renderHook(() =>
-    useGetTaxOptions({
+    useTaxOptions({
       federalTaxes,
       stateTaxes,
       USACity,
@@ -51,7 +51,7 @@ const deductionMap = {
   head_of_household: 24150,
 } as TaxData[string];
 
-describe("useGetTaxOptions", () => {
+describe("useTaxOptions", () => {
   it("turns each tax type into a selectable option", () => {
     const result = options(
       { [FEDERAL_INCOME]: {}, [SOCIAL_SECURITY]: {} } as TaxData,

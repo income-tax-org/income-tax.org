@@ -1,6 +1,6 @@
 import { ALL_STATES } from "@/constants/states";
 import type { AutocompleteOption, AvailableStatesAndCities } from "@/types";
-import { preserveQueryParams, updateURL } from "@/utils/base-path";
+import { preserveQueryParams, updateURL } from "@/utils/url";
 import {
   snakeToDashCase,
   snakeToTitleCase,

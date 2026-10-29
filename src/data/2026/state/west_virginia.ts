@@ -18,7 +18,7 @@ import {
 import {
   OCCUPATIONAL_PRIVILEGE_TAX,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

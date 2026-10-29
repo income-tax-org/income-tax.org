@@ -19,7 +19,7 @@ import { YearSelect } from "./input/YearSelect";
 import { CITY_TAXES } from "@/constants/pages";
 import type { TaxData } from "@/types";
 import { ALL_STATES } from "@/constants/states";
-import { useUrlSelectionOnPopState } from "@/utils/url-selection";
+import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
 
 interface City {
   cityKey: string;

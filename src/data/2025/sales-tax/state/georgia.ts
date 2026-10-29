@@ -26,7 +26,7 @@ import {
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { SalesTaxData } from "@/types";
 
 // Georgia Department of Revenue, "Georgia Sales and Use Tax Rate Chart", the

@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
 import federal2026 from "@/data/2026/federal";
-import { taxTablesInput } from "@/mcp/inputs";
-import type { TaxTablesInput } from "@/mcp/inputs";
-import { parseQuery } from "@/mcp/http";
-import { InputError, loadLocation } from "@/mcp/run";
-import { TAX_DATA_REGISTRY, YEARS } from "@/mcp/tax-data-registry";
-import { runTaxTables } from "@/mcp/tax-tables";
+import { taxTablesInput } from "@/api/inputs";
+import type { TaxTablesInput } from "@/api/inputs";
+import { parseQuery } from "@/api/http";
+import { InputError, loadLocation } from "@/api/run";
+import { TAX_DATA_REGISTRY, YEARS } from "@/data-loaders/registry";
+import { runTaxTables } from "@/api/tax-tables";
+import { salesTaxCitiesFor } from "@/utils/sales-tax";
 
 const SITE = "https://income-tax.org";
 
@@ -190,12 +191,20 @@ describe("runTaxTables", () => {
   });
 
   // Every location the calculator can serve must also produce tables, and
-  // every schedule in them must carry a kind the response explains.
+  // every schedule in them must carry a kind the response explains. So must
+  // every city the tax tables add for sales tax alone.
   it("describes every state and city in every year", async () => {
     for (const year of YEARS) {
       for (const state of Object.keys(TAX_DATA_REGISTRY[year].states)) {
-        const { cities } = await loadLocation({ year, state });
-        for (const city of ["", ...cities]) {
+        const { cities, salesTax } = await loadLocation(
+          { year, state },
+          { withSalesTax: true },
+        );
+        const allCities = new Set([
+          ...cities,
+          ...salesTaxCitiesFor(salesTax ?? null),
+        ]);
+        for (const city of ["", ...Array.from(allCities)]) {
           const result: Json = await tables({ year, state, city });
           const explained = result.how_to_read.join("\n");
           for (const section of [result.federal, result.state, result.local]) {
@@ -210,6 +219,89 @@ describe("runTaxTables", () => {
       }
     }
   }, 60_000);
+});
+
+describe("runTaxTables sales tax", () => {
+  const allYear = (rate: number) => [
+    { from: "2026-01-01", to: "2026-12-31", rate_percent: rate },
+  ];
+
+  it("gives the state rate, the average and each city's rate by period", async () => {
+    const result: Json = await tables({ year: "2026", state: "washington" });
+    const salesTax = result.sales_tax;
+    expect(salesTax.data_available).toBe(true);
+    expect(salesTax.state_rate).toEqual(allYear(6.5));
+    expect(salesTax.state_average.local_rate).toEqual([
+      { from: "2026-01-01", to: "2026-06-30", rate_percent: 3.01 },
+      { from: "2026-07-01", to: "2026-12-31", rate_percent: 3.07 },
+    ]);
+    expect(salesTax.cities.seattle.combined_rate).toEqual(allYear(10.55));
+    expect(salesTax.cities.tacoma.combined_rate).toEqual([
+      { from: "2026-01-01", to: "2026-03-31", rate_percent: 10.3 },
+      { from: "2026-04-01", to: "2026-06-30", rate_percent: 10.4 },
+      { from: "2026-07-01", to: "2026-12-31", rate_percent: 10.5 },
+    ]);
+    expect(result.how_to_read.join("\n")).toContain("sales_tax:");
+  });
+
+  it("accepts a city with a sales tax rate but no local income tax", async () => {
+    const result: Json = await tables({
+      year: "2026",
+      state: "washington",
+      city: "seattle",
+    });
+    expect(result.location.city).toBe("seattle");
+    expect(result.local).toBeNull();
+    expect(Object.keys(result.sales_tax.cities)).toEqual(["seattle"]);
+    expect(result.sales_tax.cities.seattle).toEqual({
+      local_rate: allYear(4.05),
+      combined_rate: allYear(10.55),
+    });
+    expect(result.source).toBe(`${SITE}/tax-tables/2026/washington/seattle/`);
+  });
+
+  it("says a year has no data rather than reporting 0%", async () => {
+    const result: Json = await tables({ year: "2024", state: "washington" });
+    expect(result.sales_tax).toEqual({
+      data_available: false,
+      note: "No sales tax data for 2024. That is missing data, not a 0% rate. Years with data: 2026, 2025.",
+    });
+    expect(result.how_to_read.join("\n")).not.toContain("sales_tax:");
+  });
+
+  it("rejects a sales tax city in a year without sales tax data", async () => {
+    await expect(
+      tables({ year: "2024", state: "washington", city: "seattle" }),
+    ).rejects.toThrow(InputError);
+  });
+
+  it("returns sales tax alone when asked for it alone", async () => {
+    const result: Json = await tables({
+      year: "2026",
+      state: "washington",
+      tax_types: ["sales_tax"],
+    });
+    expect(result.federal.taxes).toEqual({});
+    expect(result.state.taxes).toEqual({});
+    expect(result.sales_tax.data_available).toBe(true);
+  });
+
+  it("leaves sales tax out when other tax types are asked for", async () => {
+    const result: Json = await tables({
+      year: "2026",
+      state: "washington",
+      tax_types: ["state_income"],
+    });
+    expect(result.sales_tax).toBeNull();
+  });
+
+  it("has no sales tax without a state", async () => {
+    const result: Json = await tables({ year: "2026" });
+    expect(result.sales_tax).toBeNull();
+    await expect(
+      tables({ year: "2026", tax_types: ["sales_tax"] }),
+    ).rejects.toThrow(InputError);
+  });
 });
 
 describe("parseQuery tax_types", () => {

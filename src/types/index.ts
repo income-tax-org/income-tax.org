@@ -10,7 +10,7 @@ import type {
   STATE_INCOME,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "../constants/tax_types";
+} from "../constants/tax-types";
 import type { CITIES, EXEMPT, INFINITY } from "../constants";
 import type { Money } from "@/utils/money";
 import type { ReactElement } from "react";

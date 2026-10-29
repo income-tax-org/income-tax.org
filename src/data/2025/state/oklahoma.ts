@@ -5,7 +5,7 @@ import {
   MARRIED_SEPARATELY,
   SINGLE,
 } from "@/constants/filing-status";
-import { STANDARD_DEDUCTION, STATE_INCOME } from "@/constants/tax_types";
+import { STANDARD_DEDUCTION, STATE_INCOME } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 // Verified 2026-09-08 against the Oklahoma Tax Commission's own Form 511

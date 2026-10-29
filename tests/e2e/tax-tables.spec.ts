@@ -187,3 +187,52 @@ test("tax data for deductions is displayed", async ({ page }) => {
     page.locator("tr#standard_federal_deductions_row_0").locator("td").nth(1),
   ).toHaveText("$13,850");
 });
+
+test("sales tax rates are listed by period where they changed", async ({
+  page,
+}) => {
+  await page.goto("/tax-tables/2026/washington/?tables=sales-tax", {
+    waitUntil: "domcontentloaded",
+  });
+
+  // Washington's average local rate rose for the second half of 2026; the
+  // table lists both rather than averaging them.
+  const average = page.locator("tr#washington_sales_tax_row_0").locator("td");
+  await expect(average.nth(0)).toHaveText("State average");
+  await expect(average.nth(2)).toContainText("3.01% (Jan–Jun)");
+  await expect(average.nth(2)).toContainText("3.07% (Jul–Dec)");
+  await expect(
+    page.getByText(
+      "Rates that changed during 2026 are listed with the months each applied.",
+    ),
+  ).toBeVisible();
+});
+
+test("a city with only a sales tax rate has its own tax tables", async ({
+  page,
+}) => {
+  await page.goto("/tax-tables/2026/washington/?tables=sales-tax", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForTimeout(1000);
+
+  // Seattle levies no income tax, so only sales tax puts it in the list.
+  await page.fill("input#city-select", "Seattle");
+  await page.waitForTimeout(500);
+  await page.keyboard.press("Escape");
+  expect(page.url()).toContain("/tax-tables/2026/washington/seattle");
+
+  const seattle = page.locator("tr#seattle_sales_tax_row_0").locator("td");
+  await expect(seattle.nth(0)).toHaveText("Seattle");
+  await expect(seattle.nth(3)).toHaveText("10.55%");
+
+  // 2024 has no sales tax data, and no Seattle page: the city is dropped and
+  // the table says the data is missing rather than showing 0%.
+  await page.getByTestId("tax-year-select").locator("input").fill("2024");
+  await page.waitForTimeout(500);
+  expect(page.url()).toContain("/tax-tables/2024/washington");
+  expect(page.url()).not.toContain("seattle");
+  await expect(page.locator("table#washington_sales_tax")).toContainText(
+    "No sales tax data for 2024",
+  );
+});

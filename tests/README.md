@@ -1,6 +1,6 @@
 # End-to-End (E2E) Tests
 
-This directory contains end-to-end tests for the income tax calculator using [Playwright](https://playwright.dev/).
+The [`e2e/`](./e2e/) directory contains end-to-end tests for the income tax calculator using [Playwright](https://playwright.dev/).
 
 For information about **unit tests**, see [`tests/unit/README.md`](./unit/README.md).
 
@@ -31,7 +31,7 @@ npm test
 The Playwright configuration is defined in `playwright.config.ts`:
 
 - **Base URL**: `http://127.0.0.1:3001`
-- **Test Pattern**: `**/*.spec.ts` (excludes `.test.ts` files in `unit/`)
+- **Test Directory**: `tests/e2e/` (`*.spec.ts`)
 - **Web Server**: Started automatically. Locally this is the Next.js dev
   server (`npm run dev:test`), reusing one already running if there is one. On
   CI (`CI=1`) it serves the built static export instead (`npm run start:test`),

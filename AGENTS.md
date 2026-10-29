@@ -46,7 +46,7 @@ All tax data used for calculations is located in [src/data](./src/data).
 1. Create/update `src/data/{year}/state/{state_name}.ts` following the format in existing files
 2. Add state constant to [src/constants/states.ts](./src/constants/states.ts) if new state
 3. Add city constant to [src/constants/cities.ts](./src/constants/cities.ts) if new city
-4. Add tax type constants to [src/constants/tax_types.ts](./src/constants/tax_types.ts) if needed
+4. Add tax type constants to [src/constants/tax-types.ts](./src/constants/tax-types.ts) if needed
 5. Run `npm run validate-tax-data` to ensure schema compliance
 6. Run tests: `npm test`
 
@@ -90,22 +90,26 @@ See [scripts/README.md](./scripts/README.md) for detailed documentation on all a
 in [functions/](./functions/). Everything else stays static; `public/_routes.json`
 limits Functions to those paths.
 
-- Shared logic lives in [src/mcp/](./src/mcp/): Zod input schemas (no
+- Shared logic lives in [src/api/](./src/api/): Zod input schemas (no
   transforms, since they double as MCP JSON Schema), the run/serialize layer,
-  the MCP server factory, and `tax-tables.ts`, which labels every schedule with
+  the MCP server factory (`mcp-server.ts`), and `tax-tables.ts`, which labels every schedule with
   its `kind` and `basis` so a reader can tell which arithmetic applies. The
   take-home solver is
   [src/utils/target-income.ts](./src/utils/target-income.ts).
 - Functions have no filesystem, so tax data is reached through
-  `src/mcp/tax-data-registry.ts`, **generated** by
-  `npm run generate-tax-data-registry` (also run by `prebuild`). After adding a
-  year or state, regenerate it; `tests/unit/tax-data-registry.test.ts` fails if
-  it drifts.
+  `src/data-loaders/registry.ts`, **generated** by
+  `npm run generate-tax-data-registry` (also run by `prebuild` and `predev`).
+  After adding a year or state, regenerate it;
+  `tests/unit/tax-data-registry.test.ts` fails if it drifts. Its `YEARS` and
+  `LATEST_YEAR` are the app's list of data years everywhere, not just in
+  Functions. Static pages read the full data set from disk with
+  `src/data-loaders/read-from-disk.ts` (server-only); client components
+  lazy-import single files through `src/hooks/use-tax-data.ts`.
 - Discoverability: [/developers](./src/app/developers/page.tsx) documents the
   API (its parameter list is generated from the Zod schemas, so it stays in
   step) and is the last link, "API", in the header and footer.
   [/openapi.json](./src/app/openapi.json/route.ts) is generated from the same
-  schemas at build time (`src/mcp/openapi.ts`), as a static file.
+  schemas at build time (`src/api/openapi.ts`), as a static file.
 - Static tax tables: `postbuild` writes every table to
   `out/data/tax-tables/{year}[/{state}[/{city}]].json`
   ([scripts/generate-static-tax-tables.ts](./scripts/generate-static-tax-tables.ts)),
@@ -142,13 +146,16 @@ The core calculation logic is in [src/utils/calculator.ts](./src/utils/calculato
   subtracts the federal income tax, up to an AGI-phased cap, from state
   taxable income — on top of the deduction, and carried into city taxes on
   state taxable income. See [src/data/README.md](./src/data/README.md).
-- **Sales tax** is separate data, in `src/data/{year}/sales-tax/`, used only
-  by the comparison page ([sales-tax.ts](./src/utils/sales-tax.ts)), never by
-  `calculate()`. See [src/data/README.md](./src/data/README.md#sales-tax).
+- **Sales tax** is separate data, in `src/data/{year}/sales-tax/`, used by
+  the comparison page ([sales-tax.ts](./src/utils/sales-tax.ts)) and the tax
+  tables (page, API and static JSON), never by `calculate()`. Its cities, like
+  Seattle, get tax-table pages but no calculator pages. The registry carries
+  the files for Functions. See
+  [src/data/README.md](./src/data/README.md#sales-tax).
 - **Personal exemption credit**: a state with `personal_exemption_credit`
   (Oregon) takes a nonrefundable credit off its own income tax only. New
   config keys like these belong in `NON_TAX_DATA_KEYS` in
-  [tax_types.ts](./src/constants/tax_types.ts), which keeps them out of every
+  [tax-types.ts](./src/constants/tax-types.ts), which keeps them out of every
   list of taxes.
 
 ## Testing
@@ -172,7 +179,7 @@ npm run test:e2e:ui            # Interactive UI mode
 
 **Important:** E2E tests run against `localhost:3001` in test mode.
 
-See [tests/README.md](./tests/README.md) for test patterns and examples.
+Specs live in `tests/e2e/`. See [tests/README.md](./tests/README.md) for test patterns and examples.
 
 ## Build & Deployment
 
@@ -191,7 +198,7 @@ npm run start                  # Serves out/ directory
 
 Two workflows run on push/PR:
 
-1. **[lint-build-test.yml](./.github/workflows/lint-built-test.yml)**
+1. **[lint-build-test.yml](./.github/workflows/lint-build-test.yml)**
    - Lints (Next.js auto-lints during build)
    - Builds for test environment
    - Runs Playwright e2e tests
@@ -224,6 +231,11 @@ Cloudflare dashboard as a Redirect Rule.
 ### Naming Conventions
 
 - **URLs and files**: dash-case, e.g., `/tax-tables/2025/missouri/kansas-city/?tables=city-income`
+  - Exception: tax data files, `src/data/{year}/state/{state}.ts`, are
+    snake_case on purpose. The filename is the state key (`new_jersey`), which
+    matches the state constant and the generated registry imports.
+- **React hooks**: in [src/hooks/](./src/hooks/), named `use-*.ts`; pure
+  helpers stay in [src/utils/](./src/utils/)
 - **Constants and code**: snake_case, e.g., `kansas_city`, `city_income`
 - **Components**: PascalCase
 - **Functions/variables**: camelCase

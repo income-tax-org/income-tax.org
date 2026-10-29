@@ -9,7 +9,7 @@ import {
   INTEREST_AND_DIVIDENDS,
   NONE,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

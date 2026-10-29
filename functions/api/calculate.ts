@@ -1,9 +1,9 @@
 // GET /api/calculate: take-home pay and taxes for a gross income, as JSON.
 
-import { handleGet, preflight, withoutBody } from "@/mcp/http";
-import type { CalculateInput } from "@/mcp/inputs";
-import { calculateInput } from "@/mcp/inputs";
-import { runCalculate } from "@/mcp/run";
+import { handleGet, preflight, withoutBody } from "@/api/http";
+import type { CalculateInput } from "@/api/inputs";
+import { calculateInput } from "@/api/inputs";
+import { runCalculate } from "@/api/run";
 
 const get = (request: Request) =>
   handleGet<CalculateInput>(request, calculateInput, runCalculate);

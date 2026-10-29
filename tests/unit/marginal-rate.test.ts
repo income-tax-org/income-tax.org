@@ -12,7 +12,7 @@ import { ALL, SINGLE } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
 import type { RateBracket, TaxData } from "@/types";
 import type { Money } from "@/utils/money";
-import { OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE } from "@/constants/tax_types";
+import { OREGON_PAID_FAMILY_AND_MEDICAL_LEAVE } from "@/constants/tax-types";
 import federal2025 from "@/data/2025/federal";
 import oregon2025 from "@/data/2025/state/oregon";
 

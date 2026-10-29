@@ -5,7 +5,7 @@ import {
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { SalesTaxData, SalesTaxRate } from "@/types";
 import type { Money } from "./money";
 import { asCurrency, percentage } from "./money";
@@ -42,11 +42,55 @@ export function salesTaxRatesFor(
   salesTax: SalesTaxData,
   city: string,
 ): number[] {
-  const state = monthly(salesTax[STATE_SALES_TAX]);
-  const local = monthly(
+  const state = stateSalesTaxRates(salesTax);
+  const local = localSalesTaxRates(salesTax, city);
+  return state.map((rate, i) => rate + local[i]);
+}
+
+/** The state's own rate for each month, in percent. */
+export function stateSalesTaxRates(salesTax: SalesTaxData): number[] {
+  return monthly(salesTax[STATE_SALES_TAX]);
+}
+
+/**
+ * The local rate on top of the state's for each month, in percent: the
+ * city's own, or the state's average for a city the file does not list.
+ */
+export function localSalesTaxRates(
+  salesTax: SalesTaxData,
+  city: string,
+): number[] {
+  return monthly(
     salesTax[CITIES]?.[city]?.[LOCAL_SALES_TAX] ?? salesTax[LOCAL_SALES_TAX],
   );
-  return state.map((rate, i) => rate + local[i]);
+}
+
+/** A run of months at one rate. Months are 0 to 11, both ends included. */
+export type SalesTaxPeriod = {
+  firstMonth: number;
+  lastMonth: number;
+  rate: number;
+};
+
+/**
+ * Twelve monthly rates as the runs of months they held for: one period for a
+ * rate that held all year, more where it changed.
+ *
+ * Rounded to four places, which is past any published rate, so that
+ * Colorado's 2.9 plus Arvada's 5.06 reads 7.96 rather than 7.959999999999999.
+ */
+export function salesTaxPeriods(monthlyRates: number[]): SalesTaxPeriod[] {
+  const periods: SalesTaxPeriod[] = [];
+  monthlyRates.forEach((value, month) => {
+    const rate = Math.round(value * 10_000) / 10_000;
+    const last = periods.at(-1);
+    if (last && last.rate === rate) {
+      last.lastMonth = month;
+    } else {
+      periods.push({ firstMonth: month, lastMonth: month, rate });
+    }
+  });
+  return periods;
 }
 
 export type SalesTaxEstimate = {

@@ -3,7 +3,7 @@ import {
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { SalesTaxData } from "@/types";
 
 // Maine Revenue Services general sales tax rate of 5.5%, unchanged through

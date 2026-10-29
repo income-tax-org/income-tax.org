@@ -5,7 +5,7 @@ import Link from "next/link";
 import { z } from "zod";
 import Wrapper from "@/components/Wrapper";
 import { DEVELOPERS, DISCLAIMER, SITE_URL } from "@/constants/pages";
-import { calculateInput, targetInput, taxTablesInput } from "@/mcp/inputs";
+import { calculateInput, targetInput, taxTablesInput } from "@/api/inputs";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
 
 type JsonSchemaProperty = {
@@ -77,7 +77,7 @@ const TOOLS = [
     name: "tax_tables",
     route: "/api/tax-tables",
     summary:
-      "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, for a year, state and optional city. Each schedule says how it is applied and what income it is charged on. Unfiltered tables are also free static files, e.g. /data/tax-tables/2026/oregon/portland.json.",
+      "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, plus the state's sales tax rates, for a year, state and optional city. Each schedule says how it is applied and what income it is charged on. Unfiltered tables are also free static files, e.g. /data/tax-tables/2026/oregon/portland.json.",
     example: "?state=oregon&city=portland&filing_status=single",
     schema: taxTablesInput,
   },

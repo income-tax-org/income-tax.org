@@ -299,3 +299,17 @@ test("sales tax offers Washington's cities and flags years without data", async 
     rows(page).filter({ hasText: "Tacoma, Washington" }),
   ).toHaveCount(1);
 });
+
+test("cities with their own sales tax rate are offered with sales tax off", async ({
+  page,
+}) => {
+  await page.goto("/compare/2026?locations=texas&income=150000", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForTimeout(1500);
+
+  await page.fill("input#compare-state-select", "Washington");
+  await page.getByRole("option", { name: "Washington" }).click();
+  await page.fill("input#compare-city-select", "Seattle");
+  await expect(page.getByRole("option", { name: "Seattle" })).toBeVisible();
+});

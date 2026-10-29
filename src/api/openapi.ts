@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import { calculateInput, targetInput, taxTablesInput } from "./inputs";
-import { YEARS } from "./tax-data-registry";
+import { YEARS } from "@/data-loaders/registry";
 
 type JsonSchema = {
   type?: string;
@@ -146,9 +146,9 @@ export function buildOpenApiSpec(siteUrl: string) {
       "/api/tax-tables": operation(
         "taxTables",
         "Look up tax brackets and rates",
-        "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, for a year, state and optional city. Each schedule is labelled with how it is applied (`kind`) and the income it is charged on (`basis`); `how_to_read` explains both. Use calculate for dollar amounts. Unfiltered tables (every filing status) are also published as free static files at /data/tax-tables/{year}/{state}/{city}.json, dash-case, e.g. /data/tax-tables/2026/oregon/portland.json; drop /{city} for a state, or both for federal only.",
+        "The brackets, rates, standard deductions, credits and 401(k) limit the calculator uses, plus the state's sales tax rates, for a year, state and optional city. Each schedule is labelled with how it is applied (`kind`) and the income it is charged on (`basis`); `how_to_read` explains both. Use calculate for dollar amounts. Unfiltered tables (every filing status) are also published as free static files at /data/tax-tables/{year}/{state}/{city}.json, dash-case, e.g. /data/tax-tables/2026/oregon/portland.json; drop /{city} for a state, or both for federal only.",
         taxTablesInput,
-        "Schedules by jurisdiction, with how_to_read notes and a link to the site's tax tables.",
+        "Schedules by jurisdiction, sales tax rates by period, how_to_read notes and a link to the site's tax tables.",
       ),
     },
   };

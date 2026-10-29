@@ -18,7 +18,7 @@ import {
   SUPPORTIVE_HOUSING_SERVICES,
   OREGON_TRANSIT_TAX,
   PERSONAL_EXEMPTION_CREDIT,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

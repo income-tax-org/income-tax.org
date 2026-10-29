@@ -27,7 +27,7 @@ import {
   LOCAL_SALES_TAX,
   STATE_SALES_TAX,
   TAXABLE_SPENDING,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { SalesTaxData } from "@/types";
 
 // Alaska has no state sales tax. Local rates are from the Alaska Remote

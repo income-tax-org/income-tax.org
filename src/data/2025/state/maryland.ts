@@ -36,7 +36,7 @@ import {
   COUNTY_INCOME,
   STANDARD_DEDUCTION,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

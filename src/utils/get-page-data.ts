@@ -1,4 +1,4 @@
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import type { CityPageParams, StatePageParams } from "@/types/page";
 import path from "path";
 import { dashToSnakeCase, snakeToTitleCase } from "./string-utils";
@@ -148,4 +148,27 @@ export async function getComparePageData(year?: string) {
     statesAndCitiesForYear,
     defaultFederalTaxes: taxDataByYear[selectedYear]?.federal || {},
   };
+}
+
+/**
+ * The tax tables' city lists: cities with local income or payroll taxes, and
+ * cities with a sales tax rate of their own, like Seattle. The calculator
+ * keeps to the first, since it never charges sales tax.
+ */
+export async function getTaxTablesStatesAndCities() {
+  const dataDirectory = path.join(process.cwd(), "src", "data");
+  const { statesAndCitiesForYear, salesTaxCitiesForYear } =
+    await readTaxDataFromDisk(dataDirectory);
+
+  const merged: typeof statesAndCitiesForYear = {};
+  for (const [year, states] of Object.entries(statesAndCitiesForYear)) {
+    merged[year] = {};
+    for (const [state, { cities }] of Object.entries(states)) {
+      const salesTaxCities = salesTaxCitiesForYear[year]?.[state]?.cities ?? [];
+      merged[year][state] = {
+        cities: Array.from(new Set([...cities, ...salesTaxCities])).sort(),
+      };
+    }
+  }
+  return merged;
 }

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useUrlSelectionOnPopState } from "@/utils/url-selection";
+import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
 
 function visit(url: string) {
   window.history.pushState(null, "", url);

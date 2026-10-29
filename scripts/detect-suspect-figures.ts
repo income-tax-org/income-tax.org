@@ -16,8 +16,8 @@
  * data. Read the hits, confirm each against the state's own publication, and
  * silence a confirmed-correct one with a comment in the data file.
  */
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
-import { STANDARD_DEDUCTION, STATE_INCOME } from "@/constants/tax_types";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
+import { STANDARD_DEDUCTION, STATE_INCOME } from "@/constants/tax-types";
 import { CITIES } from "@/constants";
 import { FILING_STATUSES } from "@/constants/filing-status";
 

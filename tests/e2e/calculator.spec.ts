@@ -41,7 +41,7 @@ test("expected values are calculated for different tax years", async ({
   // Expect total take home for 2023. The Oregon statewide transit tax is
   // computed on gross wages, so Oregon's standard deduction does not reduce it.
   await expect(page.getByTestId("total-take-home-amount")).toHaveText(
-    "$69,133.43",
+    "$70,051.93",
   );
 
   // Change year to 2024 and expect total to update
@@ -55,6 +55,6 @@ test("expected values are calculated for different tax years", async ({
   });
 
   await expect(page.getByTestId("total-take-home-amount")).toHaveText(
-    "$69,565.18",
+    "$70,536.06",
   );
 });

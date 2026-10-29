@@ -1,6 +1,6 @@
 import type { TaxData } from "@/types";
 import { useEffect } from "react";
-import { updateURL } from "./base-path";
+import { updateURL } from "@/utils/url";
 
 type GetTaxData = {
   year: string;
@@ -12,7 +12,7 @@ type GetTaxData = {
   baseRoute?: string;
 };
 
-export function useGetTaxData({
+export function useTaxData({
   year,
   USAState,
   setFederalTaxes,

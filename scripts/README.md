@@ -12,6 +12,7 @@ This directory contains utility scripts for managing the Income Tax Calculator p
 - [Build & Deployment](#build--deployment)
   - [generate-og-images.ts](#generate-og-imagests)
   - [update-manifest.js](#update-manifestjs)
+  - [open-browser.js](#open-browserjs)
 
 ---
 
@@ -179,6 +180,19 @@ npm run build
 - No manual invocation needed
 
 **Note:** This is necessary for static site deployment where the app is served from the root path.
+
+---
+
+### open-browser.js
+
+**Node.js script** that opens `http://localhost:{port}` in the default browser.
+
+**Usage:**
+```bash
+node scripts/open-browser.js 3001
+```
+
+Called by `npm run dev` and `npm run go`; no manual invocation needed.
 
 ---
 

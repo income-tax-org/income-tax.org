@@ -6,7 +6,7 @@ import {
   MARRIED_SEPARATELY,
   SINGLE,
 } from "@/constants/filing-status";
-import { STATE_INCOME, STANDARD_DEDUCTION } from "@/constants/tax_types";
+import { STATE_INCOME, STANDARD_DEDUCTION } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

@@ -48,13 +48,13 @@ npm test
 | `calculator.test.ts`        | node        | Exact tax figures, verified independently |
 | `tax-data-sweep.test.ts`    | node        | All 204 state-years, plausibility only    |
 | `tax-table-data.test.ts`    | node        | Bracket-table row building                |
-| `read-tax-data.test.ts`     | node        | Data assembly and its memo                |
+| `read-from-disk.test.ts`    | node        | Data assembly and its memo                |
 | `get-metadata.test.ts`      | node        | Page titles and descriptions              |
-| `get-tax-options.test.ts`   | jsdom       | The tax-type option list                  |
+| `use-tax-options.test.ts`   | jsdom       | The tax-type option list                  |
 | `string-utils.test.ts`      | node        | Case conversion                           |
 | `url-selection.test.ts`     | jsdom       | Reading selection out of the URL          |
 | `use-url-selection.test.ts` | jsdom       | Back/forward handling                     |
-| `base-path.test.ts`         | jsdom       | Writing selection into the URL            |
+| `url.test.ts`               | jsdom       | Writing selection into the URL            |
 
 Vitest runs in node by default; files needing browser globals opt in with a
 `@vitest-environment jsdom` docblock.

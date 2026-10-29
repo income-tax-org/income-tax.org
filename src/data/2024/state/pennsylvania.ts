@@ -17,7 +17,7 @@ import {
   YORK,
 } from "@/constants/cities";
 import { ALL } from "@/constants/filing-status";
-import { LOCAL_EARNED_INCOME, STATE_INCOME } from "@/constants/tax_types";
+import { LOCAL_EARNED_INCOME, STATE_INCOME } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

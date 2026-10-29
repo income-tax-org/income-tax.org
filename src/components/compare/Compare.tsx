@@ -4,61 +4,52 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Autocomplete,
   Box,
-  Button,
   Chip,
-  Collapse,
   Divider,
   FormControlLabel,
-  IconButton,
   InputAdornment,
-  MenuItem,
   Switch,
   TextField,
-  Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import DeleteOutline from "@mui/icons-material/DeleteOutline";
-import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUp from "@mui/icons-material/KeyboardArrowUp";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ALL_STATES } from "@/constants/states";
-import { FILING_STATUSES } from "@/constants/filing-status";
+import { FILING_STATUSES, SINGLE } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
 import { COMPARE } from "@/constants/pages";
-import { MAX_401K_CONTRIBUTION } from "@/constants/tax_types";
-import type { AvailableStatesAndCities, SalesTaxData, TaxData } from "@/types";
-import { getSegmentColor } from "@/constants/chart-colors";
+import { MAX_401K_CONTRIBUTION } from "@/constants/tax-types";
+import type { AvailableStatesAndCities, TaxData } from "@/types";
+import { useComparedTaxData } from "@/hooks/use-compared-tax-data";
 import {
   buildComparison,
-  citiesForState,
+  labelFor,
   locationId,
+  parseLocations,
+  serialiseLocations,
   standardStateDeduction,
 } from "@/utils/compare-locations";
-import type {
-  ComparedLocation,
-  ComparisonRow,
-} from "@/utils/compare-locations";
-import { asCurrency, formatMoney, formatMoneyNoCents } from "@/utils/money";
+import type { ComparedLocation } from "@/utils/compare-locations";
+import { asCurrency, formatMoneyNoCents } from "@/utils/money";
 import {
   defaultTaxableSpending,
-  salesTaxCitiesFor,
   usesAverageLocalRate,
 } from "@/utils/sales-tax";
-import { formatPercent } from "@/utils/format-percent";
-import { getQueryParams, updateURL } from "@/utils/base-path";
 import {
-  dashToSnakeCase,
-  snakeToDashCase,
-  snakeToTitleCase,
-} from "@/utils/string-utils";
-import { YearSelect } from "./input/YearSelect";
-import { IncomeField } from "./input/IncomeField";
-import { Contribution401kField } from "./input/Contribution401kField";
-import { TaxBreakdownBar } from "./TaxBreakdownBar";
+  getQueryParams,
+  parseAmountParam,
+  parseIncomeParam,
+  updateURL,
+} from "@/utils/url";
+import { snakeToTitleCase } from "@/utils/string-utils";
+import { YearSelect } from "@/components/input/YearSelect";
+import { IncomeField } from "@/components/input/IncomeField";
+import { Contribution401kField } from "@/components/input/Contribution401kField";
+import { FilingStatusSelect } from "@/components/input/FilingStatusSelect";
+import { HELPER_TEXT_SPACER } from "@/components/input/HelperTextSpacer";
+import { CompareRow } from "./CompareRow";
+import { LocationPicker } from "./LocationPicker";
 
 type CompareProps = {
   availableYears: string[];
@@ -79,65 +70,6 @@ type CompareProps = {
 /** Shown when the compared states do not share one standard deduction. */
 const VARIES_BY_STATE = "Varies by state";
 
-/**
- * Holds the helper-text row's height when a field has nothing to say. MUI
- * omits the element entirely for empty text, which makes the field jump.
- */
-const HELPER_TEXT_SPACER = (
-  <Box
-    component="span"
-    aria-hidden
-    sx={{ display: "block", minHeight: "1.66em" }}
-  />
-);
-
-/** Serialised into `?locations=` as `oregon-portland,texas`. */
-function parseLocations(value: string | null): ComparedLocation[] {
-  if (!value) return [];
-  return value
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-    .map((entry) => {
-      const [state, city = ""] = entry.split("/");
-      return { state: dashToSnakeCase(state), city: dashToSnakeCase(city) };
-    })
-    .filter((location) => ALL_STATES.includes(location.state));
-}
-
-function serialiseLocations(locations: ComparedLocation[]): string {
-  return locations
-    .map(({ state, city }) =>
-      city
-        ? `${snakeToDashCase(state)}/${snakeToDashCase(city)}`
-        : snakeToDashCase(state),
-    )
-    .join(",");
-}
-
-/** Null where the year has no sales tax data for the state. */
-async function loadSalesTax(
-  year: string,
-  state: string,
-): Promise<SalesTaxData | null> {
-  try {
-    const mod = (await import(
-      `@/data/${year}/sales-tax/state/${state}.ts`
-    )) as {
-      default: SalesTaxData;
-    };
-    return mod.default;
-  } catch {
-    return null;
-  }
-}
-
-function labelFor({ state, city }: ComparedLocation): string {
-  return city
-    ? `${snakeToTitleCase(city)}, ${snakeToTitleCase(state)}`
-    : snakeToTitleCase(state);
-}
-
 export default function Compare({
   availableYears,
   defaultYear,
@@ -148,7 +80,7 @@ export default function Compare({
 }: CompareProps) {
   const [year, setYear] = useState(defaultYear);
   const [income, setIncome] = useState(150_000);
-  const [filingStatus, setFilingStatus] = useState<FilingStatus>("single");
+  const [filingStatus, setFilingStatus] = useState<FilingStatus>(SINGLE);
   const [totalIRA, setTotalIRA] = useState(0);
   // Undefined means "use the federal standard deduction". State deductions are
   // never held here: each location resolves its own, or Oregon's would end up
@@ -158,17 +90,9 @@ export default function Compare({
   >(undefined);
   const [locations, setLocations] =
     useState<ComparedLocation[]>(defaultLocations);
-  const [stateTaxesByState, setStateTaxesByState] = useState<
-    Record<string, TaxData>
-  >({});
-  const [federalTaxes, setFederalTaxes] =
-    useState<TaxData>(defaultFederalTaxes);
   const [includeSalesTax, setIncludeSalesTax] = useState(false);
   // Undefined means "estimate it from income", which follows the income field.
   const [spending, setSpending] = useState<number | undefined>(undefined);
-  const [salesTaxByState, setSalesTaxByState] = useState<
-    Record<string, SalesTaxData | null>
-  >({});
 
   const availableStatesAndCities = statesAndCitiesForYear[year];
 
@@ -196,21 +120,19 @@ export default function Compare({
     const params = getQueryParams();
     const fromUrl = parseLocations(params.get("locations"));
     if (fromUrl.length) setLocations(fromUrl);
-    const urlIncome = parseInt(params.get("income") ?? "", 10);
-    if (!isNaN(urlIncome) && urlIncome > 0) setIncome(urlIncome);
-    const urlIra = parseInt(params.get("ira") ?? "", 10);
-    if (!isNaN(urlIra) && urlIra > 0) setTotalIRA(urlIra);
-    const urlDeductions = parseInt(params.get("deductions") ?? "", 10);
-    if (!isNaN(urlDeductions) && urlDeductions >= 0) {
-      setFederalDeductions(urlDeductions);
-    }
+    const urlIncome = parseIncomeParam(params.get("income"));
+    if (urlIncome !== null) setIncome(urlIncome);
+    const urlIra = parseAmountParam(params.get("ira"), { allowZero: false });
+    if (urlIra !== null) setTotalIRA(urlIra);
+    const urlDeductions = parseAmountParam(params.get("deductions"));
+    if (urlDeductions !== null) setFederalDeductions(urlDeductions);
     const status = params.get("status");
     if (status && (FILING_STATUSES as string[]).includes(status)) {
       setFilingStatus(status as FilingStatus);
     }
     if (params.get("sales-tax") === "1") setIncludeSalesTax(true);
-    const urlSpending = parseInt(params.get("spending") ?? "", 10);
-    if (!isNaN(urlSpending) && urlSpending >= 0) setSpending(urlSpending);
+    const urlSpending = parseAmountParam(params.get("spending"));
+    if (urlSpending !== null) setSpending(urlSpending);
     initialisedFromUrl.current = true;
   }, []);
 
@@ -223,7 +145,7 @@ export default function Compare({
     const params: Record<string, string | number> = {};
     if (locations.length) params.locations = serialiseLocations(locations);
     if (income > 0) params.income = income;
-    if (filingStatus !== "single") params.status = filingStatus;
+    if (filingStatus !== SINGLE) params.status = filingStatus;
     if (totalIRA > 0) params.ira = totalIRA;
     if (typeof federalDeductions !== "undefined") {
       params.deductions = federalDeductions;
@@ -245,50 +167,13 @@ export default function Compare({
     spending,
   ]);
 
-  // Each location needs its own state's schedules. The files are a few KB and
-  // code-split per state, so this is a handful of small parallel fetches.
-  useEffect(() => {
-    let cancelled = false;
-    const wanted = Array.from(new Set(locations.map((l) => l.state)));
-
-    async function load() {
-      const federal = (await import(`@/data/${year}/federal.ts`)) as {
-        default: TaxData;
-      };
-      const loaded = await Promise.all(
-        wanted.map(async (state) => {
-          try {
-            const mod = (await import(`@/data/${year}/state/${state}.ts`)) as {
-              default: TaxData;
-            };
-            return [state, mod.default] as const;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      // Small files, and only fetched once sales tax is switched on.
-      const salesTax = includeSalesTax
-        ? await Promise.all(
-            wanted.map(
-              async (state) =>
-                [state, await loadSalesTax(year, state)] as const,
-            ),
-          )
-        : [];
-      if (cancelled) return;
-      setFederalTaxes(federal.default);
-      setStateTaxesByState(
-        Object.fromEntries(loaded.filter(Boolean) as [string, TaxData][]),
-      );
-      setSalesTaxByState(Object.fromEntries(salesTax));
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [locations, year, includeSalesTax]);
+  const { federalTaxes, stateTaxesByState, salesTaxByState } =
+    useComparedTaxData({
+      locations,
+      year,
+      includeSalesTax,
+      defaultFederalTaxes,
+    });
 
   const comparingSalesTax = includeSalesTax;
 
@@ -445,24 +330,14 @@ export default function Compare({
           baseRoute={COMPARE.route}
         />
 
-        <TextField
+        <FilingStatusSelect
           id="compare-filing-status"
-          select
-          label="Filing Status"
-          value={filingStatus}
-          onChange={(event) => {
+          filingStatus={filingStatus}
+          setFilingStatus={(value: FilingStatus) => {
             markEdited();
-            setFilingStatus(event.target.value as FilingStatus);
+            setFilingStatus(value);
           }}
-          fullWidth
-          variant="standard"
-        >
-          {FILING_STATUSES.map((option) => (
-            <MenuItem key={option} value={option}>
-              {snakeToTitleCase(option)}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
       </Box>
 
       <Accordion variant="outlined" disableGutters sx={{ mt: 3, mb: 1 }}>
@@ -617,7 +492,6 @@ export default function Compare({
         stateOptions={stateOptions}
         stateTaxesByState={stateTaxesByState}
         year={year}
-        includeSalesTax={includeSalesTax}
         onAdd={addLocation}
       />
 
@@ -692,352 +566,6 @@ export default function Compare({
           </Box>
         </Box>
       )}
-    </Box>
-  );
-}
-
-function CompareRow({
-  row,
-  index,
-  isLeader,
-  label,
-  comparingSalesTax,
-  income,
-  totalIRA,
-  onRemove,
-}: {
-  row: ComparisonRow;
-  index: number;
-  isLeader: boolean;
-  label: string;
-  comparingSalesTax: boolean;
-  income: number;
-  totalIRA: number;
-  onRemove: () => void;
-}) {
-  const theme = useTheme();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Box
-      data-testid="compare-row"
-      sx={{
-        border: 1,
-        borderColor: isLeader ? "divider" : "transparent",
-        borderRadius: 1,
-        bgcolor: isLeader ? "action.hover" : "transparent",
-        px: 1.5,
-        py: 1,
-      }}
-    >
-      {/*
-        A grid, not a wrapping flex row: where a flex row breaks depends on
-        how long the place's name is, so two rows on a phone broke in two
-        different places and the totals stopped lining up. On a phone the
-        name and total share the first line and everything else the second;
-        from sm up it is one line.
-      */}
-      <Box
-        sx={{
-          display: "grid",
-          alignItems: "center",
-          columnGap: 2,
-          rowGap: 0.25,
-          gridTemplateColumns: {
-            xs: "minmax(0, 1fr) auto",
-            sm: "minmax(0, 1fr) auto 72px 72px auto",
-          },
-          gridTemplateAreas: {
-            xs: `"label total" "meta actions" "sales sales"`,
-            sm: `"label total rate delta actions" "sales sales sales sales sales"`,
-          },
-        }}
-      >
-        <Box
-          sx={{
-            gridArea: "label",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            minWidth: 0,
-          }}
-        >
-          <Box
-            aria-hidden
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: "2px",
-              flexShrink: 0,
-              bgcolor: getSegmentColor(index),
-            }}
-          />
-          <Typography
-            variant="body1"
-            fontWeight={isLeader ? "bold" : undefined}
-            sx={{ overflowWrap: "anywhere" }}
-          >
-            {label}
-          </Typography>
-        </Box>
-
-        <Typography
-          variant="body1"
-          fontWeight={isLeader ? "bold" : undefined}
-          sx={{
-            gridArea: "total",
-            textAlign: "right",
-            fontVariantNumeric: "tabular-nums",
-          }}
-          data-testid="compare-take-home"
-        >
-          {formatMoney(comparingSalesTax ? row.leftOver : row.takeHome)}
-        </Typography>
-
-        {/* Its own line on a phone; from sm up its children are grid cells. */}
-        <Box
-          sx={{
-            gridArea: { xs: "meta" },
-            display: { xs: "flex", sm: "contents" },
-            gap: 2,
-            pl: { xs: 2.25, sm: 0 },
-          }}
-        >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              gridArea: { sm: "rate" },
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {formatPercent(row.effectiveRate)} tax
-          </Typography>
-
-          <Typography
-            variant="body2"
-            sx={{
-              gridArea: { sm: "delta" },
-              fontVariantNumeric: "tabular-nums",
-              fontWeight: isLeader ? 600 : undefined,
-              color: isLeader
-                ? theme.custom.green
-                : theme.palette.text.secondary,
-            }}
-            data-testid="compare-delta"
-          >
-            {isLeader
-              ? "best"
-              : `\u2212${formatMoneyNoCents(asCurrency(row.behindLeaderBy))}`}
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{ gridArea: "actions", display: "flex", justifyContent: "end" }}
-        >
-          <Tooltip title={open ? "Hide breakdown" : "Show breakdown"}>
-            <IconButton
-              size="small"
-              aria-label={`${open ? "Hide" : "Show"} breakdown for ${label}`}
-              aria-expanded={open}
-              onClick={() => setOpen((current) => !current)}
-            >
-              {open ? (
-                <KeyboardArrowUp fontSize="small" />
-              ) : (
-                <KeyboardArrowDown fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={`Remove ${label}`}>
-            <IconButton
-              size="small"
-              aria-label={`Remove ${label}`}
-              onClick={onRemove}
-            >
-              <DeleteOutline fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {comparingSalesTax && row.salesTax ? (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              gridArea: "sales",
-              fontVariantNumeric: "tabular-nums",
-              pl: 2.25,
-            }}
-            data-testid="compare-sales-tax"
-          >
-            {/* Each half kept whole, so a narrow screen breaks between them
-                rather than stranding the rate on a line of its own. */}
-            <Box component="span" sx={{ whiteSpace: "nowrap" }}>
-              {formatMoney(row.takeHome)} take home
-            </Box>{" "}
-            <Box component="span" sx={{ whiteSpace: "nowrap" }}>
-              {"\u2212"} {formatMoney(row.salesTax)} sales tax (
-              {/* Two places: sales tax rates are quoted to the hundredth, and
-                Seattle's 10.55% would otherwise read as 10.6%. */}
-              {Number(row.salesTaxRate.toFixed(2))}%)
-            </Box>
-          </Typography>
-        ) : null}
-      </Box>
-
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <Box sx={{ mt: 2, mb: 1 }}>
-          <TaxBreakdownBar
-            federalResults={row.federalResults}
-            stateResults={row.stateResults}
-            totalIncome={income}
-            takeHome={row.takeHome}
-            totalIRA={totalIRA}
-          />
-        </Box>
-      </Collapse>
-    </Box>
-  );
-}
-
-function LocationPicker({
-  stateOptions,
-  stateTaxesByState,
-  year,
-  includeSalesTax,
-  onAdd,
-}: {
-  stateOptions: { state: string; title: string }[];
-  stateTaxesByState: Record<string, TaxData>;
-  year: string;
-  /** Also offers cities that differ only in sales tax, like Seattle. */
-  includeSalesTax: boolean;
-  onAdd: (location: ComparedLocation) => void;
-}) {
-  const [pendingState, setPendingState] = useState<string>("");
-  const [pendingCity, setPendingCity] = useState<string>("");
-  const [cityOptions, setCityOptions] = useState<string[]>([]);
-  const [loadingCities, setLoadingCities] = useState(false);
-
-  // Cities only become known once the state's data is in hand.
-  useEffect(() => {
-    let cancelled = false;
-    setPendingCity("");
-    if (!pendingState) {
-      setCityOptions([]);
-      return;
-    }
-    setLoadingCities(true);
-    (async () => {
-      try {
-        const [incomeCities, salesTaxCities] = await Promise.all([
-          stateTaxesByState[pendingState]
-            ? citiesForState(stateTaxesByState[pendingState])
-            : import(`@/data/${year}/state/${pendingState}.ts`).then(
-                (mod: { default: TaxData }) => citiesForState(mod.default),
-                () => [],
-              ),
-          includeSalesTax
-            ? loadSalesTax(year, pendingState).then(salesTaxCitiesFor)
-            : [],
-        ]);
-        if (!cancelled) {
-          setCityOptions(
-            Array.from(new Set([...incomeCities, ...salesTaxCities])).sort(),
-          );
-        }
-      } finally {
-        if (!cancelled) setLoadingCities(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [pendingState, stateTaxesByState, year, includeSalesTax]);
-
-  const add = () => {
-    if (!pendingState) return;
-    onAdd({ state: pendingState, city: pendingCity });
-    setPendingState("");
-    setPendingCity("");
-  };
-
-  const hasCities = cityOptions.length > 0;
-
-  return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr auto" },
-        gap: 2,
-        alignItems: "start",
-        maxWidth: 700,
-      }}
-    >
-      <Autocomplete
-        id="compare-state-select"
-        options={stateOptions}
-        getOptionLabel={(option) => option.title}
-        isOptionEqualToValue={(option, value) => option.state === value.state}
-        value={stateOptions.find((o) => o.state === pendingState) ?? null}
-        onChange={(event, value) => setPendingState(value?.state ?? "")}
-        renderInput={(params) => {
-          const { key, ...props } = params as any;
-          return (
-            <TextField
-              key={props.id || key}
-              {...props}
-              label="Add a state"
-              variant="standard"
-            />
-          );
-        }}
-      />
-
-      <Autocomplete
-        id="compare-city-select"
-        options={cityOptions}
-        getOptionLabel={(option) => snakeToTitleCase(option)}
-        disabled={!pendingState || !hasCities}
-        value={pendingCity || null}
-        onChange={(event, city) => setPendingCity(city ?? "")}
-        renderInput={(params) => {
-          const { key, ...props } = params as any;
-          return (
-            <TextField
-              key={props.id || key}
-              {...props}
-              label={
-                !pendingState
-                  ? "City"
-                  : loadingCities
-                    ? "Checking for city taxes…"
-                    : hasCities
-                      ? "City (optional)"
-                      : includeSalesTax
-                        ? "No city taxes or city sales tax data here"
-                        : "No city taxes here"
-              }
-              variant="standard"
-              helperText={
-                pendingState && hasCities
-                  ? "Leave blank for the state alone"
-                  : " "
-              }
-            />
-          );
-        }}
-      />
-
-      <Button
-        variant="outlined"
-        onClick={add}
-        disabled={!pendingState}
-        sx={{ mt: { xs: 0, sm: 2 }, whiteSpace: "nowrap" }}
-      >
-        Add
-      </Button>
     </Box>
   );
 }

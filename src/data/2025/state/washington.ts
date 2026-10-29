@@ -5,7 +5,7 @@ import {
   NONE,
   STATE_INCOME,
   WASHINGTON_CARES_FUND,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

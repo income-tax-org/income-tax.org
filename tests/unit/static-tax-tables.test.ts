@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import path from "path";
-import { staticTaxTablesPath } from "@/mcp/static-tax-tables";
-import { runTaxTables } from "@/mcp/tax-tables";
+import { staticTaxTablesPath } from "@/api/static-tax-tables";
+import { runTaxTables } from "@/api/tax-tables";
 
 describe("staticTaxTablesPath", () => {
   it("builds dash-case paths at each level", () => {

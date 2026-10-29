@@ -41,7 +41,7 @@ import {
   OCCUPATIONAL_TAX,
   STATE_INCOME,
   STANDARD_DEDUCTION,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

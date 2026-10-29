@@ -9,12 +9,12 @@ import {
   SUPPORT,
   TAX_TABLES,
 } from "@/constants/pages";
-import { getLatestDataYear } from "@/utils/get-latest-year";
+import { LATEST_YEAR } from "@/data-loaders/registry";
 
 const canonicalOf = (metadata: ReturnType<typeof getPageSpecificMetadata>) =>
   String(metadata.alternates?.canonical);
 
-const latestYear = getLatestDataYear();
+const latestYear = LATEST_YEAR;
 
 describe("canonical URLs", () => {
   it("points the newest data year at the route root, not a duplicate /{year}", () => {

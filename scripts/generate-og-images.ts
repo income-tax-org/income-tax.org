@@ -2,7 +2,7 @@
 // Images are generated per state/city and reused across all years
 
 import { OG_SCREEN_HEIGHT, OG_SCREEN_WIDTH } from "@/constants/open-graph";
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import { snakeToDashCase, snakeToTitleCase } from "@/utils/string-utils";
 import type { BrowserContext } from "@playwright/test";
 import { webkit } from "playwright";

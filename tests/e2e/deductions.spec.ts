@@ -88,7 +88,7 @@ test("a 401(k) contribution lowers take home and is shown as its own row", async
   await setUpPortland(page);
 
   await expect(page.getByTestId("total-take-home-amount")).toHaveText(
-    "$69,965.06",
+    "$70,964.81",
   );
 
   await page.fill("input#ira-401k-contributions", "23500");
@@ -98,7 +98,7 @@ test("a 401(k) contribution lowers take home and is shown as its own row", async
   // programs are charged on the full $100,000, so deferring does not shrink
   // their base.
   await expect(page.getByTestId("total-take-home-amount")).toHaveText(
-    "$53,691.31",
+    "$54,671.72",
   );
 
   // The contribution is the user's money, not a tax. It has to be accounted
@@ -191,7 +191,7 @@ test("deductions change the tax owed", async ({ page }) => {
   await setUpPortland(page);
 
   const takeHome = page.getByTestId("total-take-home-amount");
-  await expect(takeHome).toHaveText("$69,965.06");
+  await expect(takeHome).toHaveText("$70,964.81");
 
   // A larger federal deduction shrinks federal taxable income, so take home
   // has to rise.
@@ -199,11 +199,11 @@ test("deductions change the tax owed", async ({ page }) => {
   await page.waitForTimeout(500);
 
   const raised = await takeHome.textContent();
-  expect(raised).not.toBe("$69,965.06");
+  expect(raised).not.toBe("$70,964.81");
 
   const asNumber = (text: string | null) =>
     Number((text ?? "").replace(/[^0-9.]/g, ""));
-  expect(asNumber(raised)).toBeGreaterThan(69_965.06);
+  expect(asNumber(raised)).toBeGreaterThan(70_964.81);
 });
 
 /**

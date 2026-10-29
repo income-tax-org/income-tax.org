@@ -1,10 +1,10 @@
-import Compare from "@/components/Compare";
+import Compare from "@/components/compare/Compare";
 import Wrapper from "@/components/Wrapper";
 import { COMPARE } from "@/constants/pages";
 import { canonicalPairOrder, comparablePairs } from "@/constants/compare-pairs";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
 import { getComparePageData } from "@/utils/get-page-data";
-import { readTaxDataFromDisk } from "@/utils/read-tax-data";
+import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import {
   dashToSnakeCase,
   snakeToDashCase,

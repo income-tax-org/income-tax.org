@@ -1,6 +1,7 @@
 import {
   CITIES,
   GROSS_INCOME_BASIS,
+  MARGINAL_SCHEDULE,
   STATE_INCOME_TAX_BASIS,
 } from "@/constants";
 import type { FilingStatus } from "@/constants/filing-status";
@@ -8,14 +9,12 @@ import {
   NON_TAX_DATA_KEYS,
   NON_WAGE_TAX_TYPES,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { BracketSchedule, RateBracket, TaxData } from "@/types";
 import {
   incomeBasisFor,
-  isBaseAmountSchedule,
-  isFlatFeeSchedule,
-  isRateLookupSchedule,
   scheduleForFilingStatus,
+  scheduleKind,
 } from "./calculator";
 import { snakeToTitleCase } from "./string-utils";
 
@@ -64,10 +63,7 @@ const NOT_A_TAX = new Set<string>([
  */
 function isRateLadder(schedule: BracketSchedule | undefined): boolean {
   return Boolean(
-    schedule?.length &&
-      !isFlatFeeSchedule(schedule) &&
-      !isRateLookupSchedule(schedule) &&
-      !isBaseAmountSchedule(schedule),
+    schedule?.length && scheduleKind(schedule) === MARGINAL_SCHEDULE,
   );
 }
 

@@ -22,7 +22,7 @@ import {
   STANDARD_DEDUCTION,
   STATE_INCOME,
   CITY_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import { BIRMINGHAM } from "@/constants/cities";
 import type { DeductionBand, TaxData } from "@/types";
 import { toUnit } from "@/utils/money";

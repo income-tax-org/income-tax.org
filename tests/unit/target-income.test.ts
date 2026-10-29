@@ -4,9 +4,9 @@ import {
   solveForIncome,
 } from "@/utils/target-income";
 import type { TakeHomeAt } from "@/utils/target-income";
-import { runCalculate, runTarget } from "@/mcp/run";
-import { calculateInput, targetInput } from "@/mcp/inputs";
-import type { CalculateInput, TargetInput } from "@/mcp/inputs";
+import { runCalculate, runTarget } from "@/api/run";
+import { calculateInput, targetInput } from "@/api/inputs";
+import type { CalculateInput, TargetInput } from "@/api/inputs";
 
 const SITE = "https://income-tax.org";
 

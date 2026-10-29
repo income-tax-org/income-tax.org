@@ -45,6 +45,13 @@ export const INCOME_BASES = [GROSS_INCOME_BASIS, TAXABLE_INCOME_BASIS];
 export const STATE_INCOME_TAX_BASIS = "state_income_tax";
 export const TAX_BASES = [...INCOME_BASES, STATE_INCOME_TAX_BASIS];
 
+// How a bracket schedule turns income into tax; see scheduleKind in
+// utils/calculator. The values are also the `kind` /api/tax-tables reports.
+export const MARGINAL_SCHEDULE = "marginal";
+export const RATE_ON_TOTAL_SCHEDULE = "rate_on_total";
+export const BASE_AMOUNT_SCHEDULE = "base_amount";
+export const FLAT_FEE_SCHEDULE = "flat_fee";
+
 // Which jurisdiction a selectable tax option belongs to.
 //
 // Federal and state tax-type keys share one namespace and are matched together;

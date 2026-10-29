@@ -4,18 +4,18 @@ export const MARRIED = "married";
 export const MARRIED_SEPARATELY = "married_separately";
 export const HEAD_OF_HOUSEHOLD = "head_of_household";
 
-export const FILING_STATUSES = [
+export type FilingStatus =
+  | typeof SINGLE
+  | typeof MARRIED
+  | typeof MARRIED_SEPARATELY
+  | typeof HEAD_OF_HOUSEHOLD;
+
+export const FILING_STATUSES: FilingStatus[] = [
   SINGLE,
   MARRIED,
   MARRIED_SEPARATELY,
   HEAD_OF_HOUSEHOLD,
 ];
-
-export type FilingStatus =
-  | "single"
-  | "married"
-  | "married_separately"
-  | "head_of_household";
 
 export const EMPTY_STANDARD_DEDUCTION_MAP = {
   [SINGLE]: 0,

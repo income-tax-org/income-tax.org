@@ -131,6 +131,11 @@ export const NON_WAGE_TAX_TYPES: string[] = [
 
 // Sales tax. Kept in its own files, src/data/{year}/sales-tax, and never read
 // by the income calculator. See src/data/README.md.
+/**
+ * The tax tables' key for a state's sales tax rates: the `?tables=` value on
+ * the page and a `tax_types` value in the API. Not a key in any data file.
+ */
+export const SALES_TAX = "sales_tax";
 /** The state's own general sales tax rate. */
 export const STATE_SALES_TAX = "state_sales_tax";
 /**

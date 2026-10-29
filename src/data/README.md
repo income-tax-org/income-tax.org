@@ -26,7 +26,7 @@ Rather than adding string literals for city & tax names, add and reference a con
 
 - City names go in [cities.ts](../constants/cities.ts)
 
-- Tax type names go in [tax-types.ts](../constants/tax_types.ts)
+- Tax type names go in [tax-types.ts](../constants/tax-types.ts)
 
 ## File organization
 
@@ -337,7 +337,7 @@ For example a `federal.ts` file might contain part of this object,
 ```js
 import { INFINITY } from "@/constants";
 import { SINGLE } from "@/constants/filing_status";
-import { INCOME } from "@/constants/tax_types";
+import { INCOME } from "@/constants/tax-types";
 
 export default {
   [INCOME]: {
@@ -358,8 +358,11 @@ export default {
 
 Sales tax lives apart from the income tax data, in
 `{year}/sales-tax/`, because it is charged on spending rather than income.
-The income calculator never reads it. Only the comparison page does, to rank
-locations on take-home pay less the sales tax on a year's taxable spending.
+The income calculator never reads it. The comparison page does, to rank
+locations on take-home pay less the sales tax on a year's taxable spending,
+and the tax tables show its rates. A city listed here gets a tax-tables page
+even without local income taxes. After adding a year's files, run
+`npm run generate-tax-data-registry` so the API can serve them.
 
 Each state has one file per year, `sales-tax/state/{state}.ts`, holding:
 
@@ -436,7 +439,7 @@ When adding a new state or city:
 2. Add constants to:
    - [states.ts](../constants/states.ts) - if adding a new state
    - [cities.ts](../constants/cities.ts) - if adding a new city
-   - [tax_types.ts](../constants/tax_types.ts) - if adding a new tax type
+   - [tax-types.ts](../constants/tax-types.ts) - if adding a new tax type
 3. Validate: `npm run validate-tax-data`
 4. Test: `npm test`
 

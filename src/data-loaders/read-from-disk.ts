@@ -2,12 +2,13 @@
 //
 // Server-only: uses `fs`, so this must never be imported into a client
 // component. Client components lazy-import individual data files instead (see
-// use-get-tax-data.ts).
+// src/hooks/use-tax-data.ts).
 
 import { promises as fs } from "fs";
 import path from "path";
 
-import type { TaxData } from "@/types";
+import { CITIES } from "@/constants";
+import type { SalesTaxData, TaxData } from "@/types";
 
 const yearPattern = /^\d{4}$/;
 
@@ -22,6 +23,12 @@ export type StatesAndCitiesForYear = {
 export type TaxDataSet = {
   taxDataByYear: TaxDataByYear;
   statesAndCitiesForYear: StatesAndCitiesForYear;
+  /**
+   * Cities with a sales tax rate of their own, by year and state. Kept apart
+   * from `statesAndCitiesForYear` because only the tax tables list them: the
+   * calculator has nothing to show for Seattle that Washington does not.
+   */
+  salesTaxCitiesForYear: StatesAndCitiesForYear;
   years: string[];
   currentYear: string;
 };
@@ -49,6 +56,7 @@ export function readTaxDataFromDisk(
 async function assembleTaxData(dataDirectory: string): Promise<TaxDataSet> {
   const taxDataByYear: TaxDataByYear = {};
   const statesAndCitiesForYear: StatesAndCitiesForYear = {};
+  const salesTaxCitiesForYear: StatesAndCitiesForYear = {};
   const years: string[] = [];
 
   const yearDirectories = (await fs.readdir(dataDirectory))
@@ -65,6 +73,9 @@ async function assembleTaxData(dataDirectory: string): Promise<TaxDataSet> {
     const federalTaxData = await import(`@/data/${year}/federal.ts`);
     taxDataByYear[year] = { federal: federalTaxData.default };
     statesAndCitiesForYear[year] = {};
+    salesTaxCitiesForYear[year] = files.includes("sales-tax")
+      ? await readSalesTaxCities(dataDirectory, year)
+      : {};
 
     if (!files.includes("state")) {
       continue;
@@ -88,7 +99,27 @@ async function assembleTaxData(dataDirectory: string): Promise<TaxDataSet> {
   return {
     taxDataByYear,
     statesAndCitiesForYear,
+    salesTaxCitiesForYear,
     years,
     currentYear: years[0],
   };
+}
+
+async function readSalesTaxCities(
+  dataDirectory: string,
+  year: string,
+): Promise<StatesAndCitiesForYear[string]> {
+  const out: StatesAndCitiesForYear[string] = {};
+  const stateFiles = await fs.readdir(
+    path.join(dataDirectory, year, "sales-tax", "state"),
+  );
+  for (const stateFile of stateFiles) {
+    const { default: salesTax } = (await import(
+      `@/data/${year}/sales-tax/state/${stateFile}`
+    )) as { default: SalesTaxData };
+    out[stateFile.replace(".ts", "")] = {
+      cities: Object.keys(salesTax[CITIES] ?? {}),
+    };
+  }
+  return out;
 }

@@ -13,33 +13,35 @@ import {
 import { YearSelect } from "./input/YearSelect";
 import { StateSelect } from "./input/StateSelect";
 import { CitySelect } from "./input/CitySelect";
-import type { AvailableStatesAndCities, TaxData } from "@/types";
+import type { AvailableStatesAndCities, SalesTaxData, TaxData } from "@/types";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { TAX_TABLES } from "@/constants/pages";
 import { TaxOptionsSelect } from "./input/TaxOptionsSelect";
 import { EMPTY_STANDARD_DEDUCTION_MAP } from "@/constants/filing-status";
 import type { StandardDeductionByFilingStatus } from "@/types";
-import { CITIES } from "@/constants";
+import { CITIES, STATE_SCOPE } from "@/constants";
 import type { TaxOption } from "@/utils/get-tax-options";
-import { useGetTaxOptions } from "@/utils/get-tax-options";
+import { useTaxOptions } from "@/hooks/use-tax-options";
 import {
   cityTaxKey,
   dashToSnakeCase,
   snakeToDashCase,
   snakeToTitleCase,
 } from "@/utils/string-utils";
-import { useGetTaxData } from "@/utils/use-get-tax-data";
+import { useTaxData } from "@/hooks/use-tax-data";
 // Aliased: MUI exports a `Table` in the type space too.
 import type { Table as TaxTableModel } from "@/utils/tax-table-data";
 import {
+  salesTaxToTable,
   standardDeductionMapToTable,
   tableDataFromTaxData,
 } from "@/utils/tax-table-data";
-import { FEDERAL_INCOME, STATE_INCOME } from "@/constants/tax_types";
+import { FEDERAL_INCOME, SALES_TAX, STATE_INCOME } from "@/constants/tax-types";
+import { loadSalesTax } from "@/data-loaders/sales-tax";
 import type { TaxDataSelectOption } from "./input/TaxDataSelect";
 import { TaxDataSelect } from "./input/TaxDataSelect";
-import { getQueryParams, updateURL } from "@/utils/base-path";
-import { useUrlSelectionOnPopState } from "@/utils/url-selection";
+import { getQueryParams, updateURL } from "@/utils/url";
+import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
 import { asCurrency, formatMoneyNoCents } from "@/utils/money";
 
 type TaxTableProps = {
@@ -111,6 +113,11 @@ export default function TaxTables({
 
   const [max401KContribution, setMax401KContribution] = useState(0);
 
+  // Undefined until loaded; null where the year has no data for the state.
+  const [salesTax, setSalesTax] = useState<SalesTaxData | null | undefined>(
+    undefined,
+  );
+
   // Both guard the URL-writing effect below, which must not push a history
   // entry for a selection that came from the URL in the first place.
   const isInitializedFromURL = useRef(false);
@@ -120,7 +127,7 @@ export default function TaxTables({
     return statesAndCitiesForYear[year];
   }, [statesAndCitiesForYear, year]);
 
-  useGetTaxData({
+  useTaxData({
     year,
     USAState,
     setFederalTaxes,
@@ -130,7 +137,7 @@ export default function TaxTables({
     baseRoute: TAX_TABLES.route,
   });
 
-  const taxOptions = useGetTaxOptions({
+  const incomeTaxOptions = useTaxOptions({
     federalTaxes,
     stateTaxes,
     USACity,
@@ -139,6 +146,40 @@ export default function TaxTables({
     setStateStandardDeductionMap,
     setMax401KContribution,
   });
+
+  // Sales tax is offered for every state, data or not, so that a year
+  // without it says so instead of the option quietly disappearing.
+  const taxOptions = useMemo((): TaxOption[] => {
+    if (!USAState) {
+      return incomeTaxOptions;
+    }
+    return [
+      ...incomeTaxOptions,
+      {
+        title: snakeToTitleCase(`${USAState}_${SALES_TAX}`),
+        value: SALES_TAX,
+        scope: STATE_SCOPE,
+        disabled: false,
+      },
+    ];
+  }, [incomeTaxOptions, USAState]);
+
+  const showsSalesTax = selectedTaxes.some((tax) => tax.value === SALES_TAX);
+  useEffect(() => {
+    setSalesTax(undefined);
+    if (!showsSalesTax || !USAState) {
+      return;
+    }
+    let cancelled = false;
+    loadSalesTax(year, USAState).then((data) => {
+      if (!cancelled) {
+        setSalesTax(data);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [showsSalesTax, year, USAState]);
 
   useUrlSelectionOnPopState({
     year,
@@ -266,6 +307,19 @@ export default function TaxTables({
 
     for (const selectedTax of selectedTaxes) {
       const tax = selectedTax.value;
+      if (tax === SALES_TAX) {
+        if (salesTax !== undefined) {
+          tables.push(
+            salesTaxToTable(
+              `${USACity || USAState}_${SALES_TAX}`,
+              salesTax,
+              year,
+              USACity,
+            ),
+          );
+        }
+        continue;
+      }
       if (federalTaxes[tax]) {
         tables.push(tableDataFromTaxData(tax, federalTaxes[tax]));
       }
@@ -284,7 +338,15 @@ export default function TaxTables({
     }
 
     return tables;
-  }, [selectedTaxes, stateTaxes, federalTaxes, USACity, USAState]);
+  }, [
+    selectedTaxes,
+    stateTaxes,
+    federalTaxes,
+    USACity,
+    USAState,
+    salesTax,
+    year,
+  ]);
 
   const taxDataTables = useMemo(() => {
     const tables: TaxTableModel[] = [] as TaxTableModel[];
@@ -355,6 +417,8 @@ export default function TaxTables({
             year={year}
             setYear={setYear}
             baseRoute={TAX_TABLES.route}
+            statesAndCitiesForYear={statesAndCitiesForYear}
+            setUSACity={setUSACity}
           />
         </Grid>
         <Grid item xs={13} sm={5}>
@@ -410,7 +474,7 @@ export default function TaxTables({
 }
 
 function RenderTable(table: TaxTableModel) {
-  const { name, headers, rows } = table;
+  const { name, headers, rows, note } = table;
 
   return (
     <>
@@ -431,7 +495,14 @@ function RenderTable(table: TaxTableModel) {
               return (
                 <TableRow key={index} id={`${name}_row_${index}`}>
                   {row.map((cell, index) => (
-                    <TableCell key={`${cell}-${index}`}>{cell}</TableCell>
+                    // pre-line: a sales tax rate that changed mid-year is
+                    // one line per period.
+                    <TableCell
+                      key={`${cell}-${index}`}
+                      sx={{ whiteSpace: "pre-line" }}
+                    >
+                      {cell}
+                    </TableCell>
                   ))}
                 </TableRow>
               );
@@ -439,6 +510,11 @@ function RenderTable(table: TaxTableModel) {
           </TableBody>
         </Table>
       </TableContainer>
+      {note ? (
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+          {note}
+        </Typography>
+      ) : null}
     </>
   );
 }

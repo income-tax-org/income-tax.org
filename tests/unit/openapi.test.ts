@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { calculateInput, targetInput, taxTablesInput } from "@/mcp/inputs";
-import { parseQuery } from "@/mcp/http";
-import { buildOpenApiSpec } from "@/mcp/openapi";
+import { calculateInput, targetInput, taxTablesInput } from "@/api/inputs";
+import { parseQuery } from "@/api/http";
+import { buildOpenApiSpec } from "@/api/openapi";
 
 const SITE = "https://income-tax.org";
 const spec = buildOpenApiSpec(SITE);

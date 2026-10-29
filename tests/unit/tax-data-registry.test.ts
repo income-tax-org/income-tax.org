@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { readdirSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import path from "path";
-import { LATEST_YEAR, TAX_DATA_REGISTRY, YEARS } from "@/mcp/tax-data-registry";
+import { LATEST_YEAR, TAX_DATA_REGISTRY, YEARS } from "@/data-loaders/registry";
 
 const dataDirectory = path.join(process.cwd(), "src", "data");
 
@@ -24,6 +24,19 @@ describe("tax data registry", () => {
       .sort();
     expect(Object.keys(TAX_DATA_REGISTRY[year].states).sort()).toEqual(
       statesOnDisk,
+    );
+  });
+
+  it.each(yearsOnDisk)("lists every %s sales tax file", (year) => {
+    const directory = path.join(dataDirectory, year, "sales-tax", "state");
+    const salesTaxOnDisk = existsSync(directory)
+      ? readdirSync(directory)
+          .filter((file) => file.endsWith(".ts"))
+          .map((file) => file.replace(/\.ts$/, ""))
+          .sort()
+      : [];
+    expect(Object.keys(TAX_DATA_REGISTRY[year].salesTax).sort()).toEqual(
+      salesTaxOnDisk,
     );
   });
 

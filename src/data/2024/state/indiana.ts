@@ -1,6 +1,6 @@
 import { INFINITY } from "@/constants";
 import { ALL } from "@/constants/filing-status";
-import { STATE_INCOME, COUNTY_INCOME } from "@/constants/tax_types";
+import { STATE_INCOME, COUNTY_INCOME } from "@/constants/tax-types";
 import { CITIES } from "@/constants/cities";
 import {
   ADAMS_COUNTY,

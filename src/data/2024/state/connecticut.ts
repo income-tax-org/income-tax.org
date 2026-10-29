@@ -10,7 +10,7 @@ import {
   CT_PAID_FAMILY_AND_MEDICAL_LEAVE,
   STANDARD_DEDUCTION,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {

@@ -16,12 +16,12 @@ import {
   INTEREST_AND_DIVIDENDS,
   NON_WAGE_TAX_TYPES,
   STATE_INCOME,
-} from "@/constants/tax_types";
+} from "@/constants/tax-types";
 import { CITIES, INFINITY } from "@/constants";
 import { NEWARK } from "@/constants/cities";
 import { ALL } from "@/constants/filing-status";
 import { renderHook } from "@testing-library/react";
-import { useGetTaxOptions } from "@/utils/get-tax-options";
+import { useTaxOptions } from "@/hooks/use-tax-options";
 import type { TaxData } from "@/types";
 import fed2023 from "@/data/2023/federal";
 import fed2026 from "@/data/2026/federal";
@@ -184,7 +184,7 @@ describe("a payroll tax borne by the employer", () => {
   it("is not offered as something to exempt", () => {
     // Nothing to exempt from a tax that is never charged.
     const { result } = renderHook(() =>
-      useGetTaxOptions({
+      useTaxOptions({
         federalTaxes: {} as TaxData,
         stateTaxes: stateWithEmployerTax,
         USACity: NEWARK,

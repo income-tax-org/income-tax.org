@@ -2,7 +2,12 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { updateURL, getQueryParams, parseIncomeParam } from "@/utils/base-path";
+import {
+  updateURL,
+  getQueryParams,
+  parseAmountParam,
+  parseIncomeParam,
+} from "@/utils/url";
 
 function at() {
   return window.location.pathname + window.location.search;
@@ -111,6 +116,27 @@ describe("parseIncomeParam", () => {
   it("rejects values that are not a finite positive amount", () => {
     for (const value of ["0", "-1", "-1e6", "Infinity", "-Infinity", "NaN"]) {
       expect(parseIncomeParam(value)).toBeNull();
+    }
+  });
+});
+
+describe("parseAmountParam", () => {
+  it("accepts zero, a deliberate choice for deductions or spending", () => {
+    expect(parseAmountParam("0")).toBe(0);
+  });
+
+  it("reads exponent notation instead of truncating it to a digit", () => {
+    expect(parseAmountParam("1e4")).toBe(10_000);
+  });
+
+  it("rejects zero when told to", () => {
+    expect(parseAmountParam("0", { allowZero: false })).toBeNull();
+  });
+
+  // Number("  ") is 0, so a blank param must not come through as $0.
+  it("rejects blank and unreadable input", () => {
+    for (const value of [null, "", "  ", "abc", "5,000", "-1", "Infinity"]) {
+      expect(parseAmountParam(value)).toBeNull();
     }
   });
 });

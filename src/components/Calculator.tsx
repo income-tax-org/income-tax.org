@@ -1,24 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
-import MenuItem from "@mui/material/MenuItem";
-import {
-  EMPTY_STANDARD_DEDUCTION_MAP,
-  FILING_STATUSES,
-} from "@/constants/filing-status";
+import { SINGLE } from "@/constants/filing-status";
 import type { FilingStatus } from "@/constants/filing-status";
-import type { StandardDeductionByFilingStatus } from "@/types";
-import {
-  isBandedDeduction,
-  resolveStandardDeduction,
-} from "@/utils/standard-deduction";
-import { snakeToTitleCase } from "@/utils/string-utils";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import type { AvailableStatesAndCities, TaxData } from "@/types";
 import Results from "@/components/Results";
 import { RestartAlt } from "@mui/icons-material";
@@ -29,36 +19,22 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { StateSelect } from "./input/StateSelect";
 import { CitySelect } from "./input/CitySelect";
 import { YearSelect } from "./input/YearSelect";
+import { FilingStatusSelect } from "./input/FilingStatusSelect";
+import { HELPER_TEXT_SPACER } from "./input/HelperTextSpacer";
 import { TaxOptionsSelect } from "./input/TaxOptionsSelect";
 import type { TaxOption } from "@/utils/get-tax-options";
-import { useGetTaxOptions } from "@/utils/get-tax-options";
-import { useGetTaxData } from "@/utils/use-get-tax-data";
+import { useTaxOptions } from "@/hooks/use-tax-options";
+import { useTaxData } from "@/hooks/use-tax-data";
+import { useStandardDeductions } from "@/hooks/use-standard-deductions";
 import { PaycheckFrequencySelect } from "./input/PaycheckFrequencySelect";
 import { IncomeField } from "./input/IncomeField";
 import { Contribution401kField } from "./input/Contribution401kField";
 import type { PaycheckFrequency } from "@/constants/paycheck-frequency";
 import { MONTHLY } from "@/constants/paycheck-frequency";
-import { updateURL, getQueryParams, parseIncomeParam } from "@/utils/base-path";
-import { useUrlSelectionOnPopState } from "@/utils/url-selection";
+import { updateURL, getQueryParams, parseIncomeParam } from "@/utils/url";
+import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
 
-/**
- * Holds the helper-text row's height when a field has nothing to say.
- *
- * MUI omits the helper element entirely for empty text, which made the field
- * jump as the note appeared and disappeared. A literal " " avoided that but
- * left `aria-describedby` pointing at a description consisting of one space.
- */
-const HELPER_TEXT_SPACER = (
-  <Box
-    component="span"
-    aria-hidden
-    // Matches MUI's FormHelperText line-height, so the field does not shift
-    // by a few pixels as the note appears and disappears.
-    sx={{ display: "block", minHeight: "1.66em" }}
-  />
-);
-
-type HomeProps = {
+type CalculatorProps = {
   availableYears: string[];
   statesAndCitiesForYear: { [year: string]: AvailableStatesAndCities };
   defaultYear: string;
@@ -68,7 +44,7 @@ type HomeProps = {
   defaultUSACity?: string;
 };
 
-export default function Home({
+export default function Calculator({
   availableYears,
   statesAndCitiesForYear,
   defaultFederalTaxes,
@@ -76,20 +52,14 @@ export default function Home({
   defaultYear,
   defaultUSAState,
   defaultUSACity,
-}: HomeProps) {
+}: CalculatorProps) {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalIRA, setTotalIRA] = useState(0);
 
-  const [totalFederalDeductions, setTotalFederalDeductions] = useState<
-    number | undefined
-  >(undefined); // undefined until user input
-  const [totalStateDeductions, setTotalStateDeductions] = useState<
-    number | undefined
-  >(undefined); // undefined until user input
   const [USACity, setUSACity] = useState<string>(defaultUSACity || "");
   const [USAState, setUSAState] = useState(defaultUSAState || "");
   const [year, setYear] = useState(defaultYear);
-  const [filingStatus, setFilingStatus] = useState<FilingStatus>("single");
+  const [filingStatus, setFilingStatus] = useState<FilingStatus>(SINGLE);
   const [paycheckFrequency, setPaycheckFrequency] =
     useState<PaycheckFrequency>(MONTHLY);
   const [exemptTaxes, setExemptTaxes] = useState<TaxOption[]>(
@@ -100,72 +70,11 @@ export default function Home({
   const [federalTaxes, setFederalTaxes] =
     useState<TaxData>(defaultFederalTaxes);
 
-  const [federalStandardDeductionMap, setFederalStandardDeductionMap] =
-    useState<StandardDeductionByFilingStatus>(EMPTY_STANDARD_DEDUCTION_MAP);
-  const [stateStandardDeductionMap, setStateStandardDeductionMap] =
-    useState<StandardDeductionByFilingStatus>(EMPTY_STANDARD_DEDUCTION_MAP);
-
   const [max401KContribution, setMax401KContribution] = useState(0);
 
   const availableStatesAndCities = useMemo(() => {
     return statesAndCitiesForYear[year];
   }, [statesAndCitiesForYear, year]);
-
-  // What a phased-out standard deduction is measured against: income after
-  // retirement contributions, the same figure that feeds taxable income and
-  // the closest thing here to the AGI these schedules actually key on.
-  const deductionIncome = Math.max(0, totalIncome - totalIRA);
-
-  const federalStandardDeduction = useMemo(
-    () =>
-      resolveStandardDeduction(
-        federalStandardDeductionMap[filingStatus],
-        deductionIncome,
-      ) ?? 0,
-    [federalStandardDeductionMap, filingStatus, deductionIncome],
-  );
-  const stateStandardDeduction = useMemo(
-    () =>
-      resolveStandardDeduction(
-        stateStandardDeductionMap[filingStatus],
-        deductionIncome,
-      ) ?? 0,
-    [stateStandardDeductionMap, filingStatus, deductionIncome],
-  );
-
-  // Whether each jurisdiction's schedule varies with income at all. Only a
-  // banded one needs refreshing as income moves, and only a banded one can
-  // legitimately resolve to zero.
-  const federalIsBanded = isBandedDeduction(
-    federalStandardDeductionMap[filingStatus],
-  );
-  const stateIsBanded = isBandedDeduction(
-    stateStandardDeductionMap[filingStatus],
-  );
-
-  // Read through refs so the two reset callbacks keep a stable identity as
-  // income moves. They are effect dependencies, and refreshing them on every
-  // keystroke in the income field would re-run the prefill effects and
-  // overwrite a deduction the user had typed.
-  const latestStandard = useRef({ federal: 0, state: 0 });
-  latestStandard.current = {
-    federal: federalStandardDeduction,
-    state: stateStandardDeduction,
-  };
-
-  // The last figure each field was prefilled with. A field still holding it
-  // has not been touched, which is what makes it safe to refresh.
-  const autoFilled = useRef<{ federal?: number; state?: number }>({});
-
-  const resetTotalStateDeductions = useCallback(() => {
-    autoFilled.current.state = latestStandard.current.state;
-    setTotalStateDeductions(latestStandard.current.state);
-  }, []);
-
-  const resetTotalFederalDeductions = useCallback(() => {
-    autoFilled.current.federal = latestStandard.current.federal;
-    setTotalFederalDeductions(latestStandard.current.federal);
-  }, []);
 
   // Initialize income from URL query param on mount
   useEffect(() => {
@@ -191,67 +100,22 @@ export default function Home({
     }
   }, [totalIncome, year, USAState, USACity]);
 
-  // Unconditional, not guarded on the figure being non-zero. Fifteen states
-  // have no standard deduction, and treating their zero as "no data, keep
-  // what is there" left the previous state's figure in the field after an
-  // in-session switch -- and the calculation used it.
-  useEffect(() => {
-    resetTotalFederalDeductions();
-    resetTotalStateDeductions();
-  }, [
-    filingStatus,
-    federalStandardDeductionMap,
-    stateStandardDeductionMap,
-    resetTotalFederalDeductions,
-    resetTotalStateDeductions,
-  ]);
-
-  // Wisconsin and four other states shrink the standard deduction as income
-  // rises, so the prefilled figure is only right for the income it was
-  // resolved at. Refresh it as income crosses a band -- but only while the
-  // field still holds what we put there. Once the user has typed their own
-  // number it is theirs, and the reset control is how they come back.
-  //
-  // Keyed on whether the schedule is banded rather than on the resolved
-  // figure being non-zero: Wisconsin allows a single filer nothing at all
-  // above $132,549, and a truthiness check there would leave the field
-  // holding the last non-zero figure -- which is the deduction the
-  // calculation would then use.
-  useEffect(() => {
-    if (
-      federalIsBanded &&
-      totalFederalDeductions === autoFilled.current.federal
-    ) {
-      resetTotalFederalDeductions();
-    }
-    if (stateIsBanded && totalStateDeductions === autoFilled.current.state) {
-      resetTotalStateDeductions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
+  const {
+    totalFederalDeductions,
+    setTotalFederalDeductions,
+    totalStateDeductions,
+    setTotalStateDeductions,
+    setFederalStandardDeductionMap,
+    setStateStandardDeductionMap,
     federalStandardDeduction,
     stateStandardDeduction,
-    federalIsBanded,
-    stateIsBanded,
-  ]);
+    resetTotalFederalDeductions,
+    resetTotalStateDeductions,
+    standardFederalDeductionDisplay,
+    standardStateDeductionDisplay,
+  } = useStandardDeductions({ year, filingStatus, totalIncome, totalIRA });
 
-  useEffect(() => {
-    if (
-      typeof totalFederalDeductions === "undefined" &&
-      federalStandardDeductionMap[filingStatus]
-    ) {
-      resetTotalFederalDeductions();
-    }
-    if (
-      typeof totalStateDeductions === "undefined" &&
-      stateStandardDeductionMap[filingStatus]
-    ) {
-      resetTotalStateDeductions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateStandardDeductionMap, federalStandardDeductionMap]);
-
-  useGetTaxData({
+  useTaxData({
     year,
     USAState,
     setFederalTaxes,
@@ -281,7 +145,7 @@ export default function Home({
     },
   });
 
-  const taxOptions = useGetTaxOptions({
+  const taxOptions = useTaxOptions({
     federalTaxes,
     stateTaxes,
     USACity,
@@ -322,42 +186,6 @@ export default function Home({
     },
     [],
   );
-
-  // A banded deduction is only the standard one *at this income*, and saying
-  // so is the difference between a figure the reader can trust and one that
-  // looks wrong when it moves.
-  const standardDeductionLabel = useCallback(
-    (banded: boolean) =>
-      banded
-        ? `Standard deduction for ${year} at this income`
-        : `Standard deduction for ${year}`,
-    [year],
-  );
-
-  // A zero deduction is only worth labelling when a schedule genuinely
-  // allows nothing at this income. For a flat state it just means no data has
-  // loaded yet.
-  const standardStateDeductionDisplay = useMemo(() => {
-    if (stateStandardDeduction !== totalStateDeductions) return null;
-    if (stateStandardDeduction === 0 && !stateIsBanded) return null;
-    return standardDeductionLabel(stateIsBanded);
-  }, [
-    stateStandardDeduction,
-    stateIsBanded,
-    totalStateDeductions,
-    standardDeductionLabel,
-  ]);
-
-  const standardFederalDeductionDisplay = useMemo(() => {
-    if (federalStandardDeduction !== totalFederalDeductions) return null;
-    if (federalStandardDeduction === 0 && !federalIsBanded) return null;
-    return standardDeductionLabel(federalIsBanded);
-  }, [
-    federalStandardDeduction,
-    federalIsBanded,
-    totalFederalDeductions,
-    standardDeductionLabel,
-  ]);
 
   const validateAll = useCallback(() => {
     if (totalIRA > max401KContribution) {
@@ -412,23 +240,11 @@ export default function Home({
           />
         </Grid>
         <Grid xs={12} sm={3} md={3}>
-          <TextField
+          <FilingStatusSelect
             id="filing-status-select"
-            select
-            label="Filing Status"
-            value={filingStatus}
-            onChange={(e) => {
-              setFilingStatus(e.target.value as FilingStatus);
-            }}
-            fullWidth
-            variant="standard"
-          >
-            {FILING_STATUSES.map((option) => (
-              <MenuItem key={option} value={option}>
-                {snakeToTitleCase(option)}
-              </MenuItem>
-            ))}
-          </TextField>
+            filingStatus={filingStatus}
+            setFilingStatus={setFilingStatus}
+          />
         </Grid>
         <Grid xs={12} sm={6} md={6}>
           <StateSelect

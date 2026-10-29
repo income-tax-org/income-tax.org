@@ -5,12 +5,12 @@ import { toUnit } from "@/utils/money";
 import type { TaxData } from "@/types";
 import federal2026 from "@/data/2026/federal";
 import newYork2026 from "@/data/2026/state/new_york";
-import { calculateInput } from "@/mcp/inputs";
-import type { CalculateInput } from "@/mcp/inputs";
-import { InputError, runCalculate } from "@/mcp/run";
-import { handleGet, json, parseQuery, withoutBody } from "@/mcp/http";
-import { createServer } from "@/mcp/server";
-import { LATEST_YEAR } from "@/mcp/tax-data-registry";
+import { calculateInput } from "@/api/inputs";
+import type { CalculateInput } from "@/api/inputs";
+import { InputError, runCalculate } from "@/api/run";
+import { handleGet, json, parseQuery, withoutBody } from "@/api/http";
+import { createServer } from "@/api/mcp-server";
+import { LATEST_YEAR } from "@/data-loaders/registry";
 
 const SITE = "https://income-tax.org";
 

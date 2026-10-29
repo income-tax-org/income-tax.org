@@ -11,7 +11,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/utils/**", "src/constants/**"],
+      include: [
+        "src/utils/**",
+        "src/hooks/**",
+        "src/data-loaders/**",
+        "src/constants/**",
+      ],
       // Tax data is verified by scripts/validate-tax-data.ts, not by unit tests.
       exclude: ["src/data/**"],
     },
