@@ -4,6 +4,7 @@ import {
   DEVELOPERS,
   DISCLAIMER,
   INCOME_TAX_CALCULATOR,
+  PRIVACY,
   SUPPORT,
   TAX_TABLES,
 } from "@/constants/pages";
@@ -64,6 +65,7 @@ const PAGE_ROUTES: Record<string, string> = {
   [CITY_TAXES.name]: CITY_TAXES.route,
   [COMPARE.name]: COMPARE.route,
   [DISCLAIMER.name]: DISCLAIMER.route,
+  [PRIVACY.name]: PRIVACY.route,
   [DEVELOPERS.name]: DEVELOPERS.route,
 };
 
@@ -194,6 +196,11 @@ export function getPageSpecificMetadata(
     description =
       "Important disclaimer about the use of this income tax calculator. This tool provides estimates for informational purposes only and should not be used for legal or tax filing purposes.";
     openGraph.title = `${DISCLAIMER.name}`;
+    openGraph.images = `/og-images/landing.png`;
+  } else if (pageName === PRIVACY.name) {
+    description =
+      "What the Income Tax Calculator collects: no accounts, no cookies, and calculations that run in your browser.";
+    openGraph.title = `${PRIVACY.name}`;
     openGraph.images = `/og-images/landing.png`;
   }
 

@@ -298,7 +298,7 @@ export default function Wrapper({
         <Toolbar />
         {children}
       </Container>
-      <Footer pages={pages} />
+      <Footer pages={pages} currentPage={activePage ?? title} />
     </>
   );
 }

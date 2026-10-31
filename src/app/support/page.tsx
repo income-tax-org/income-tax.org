@@ -1,6 +1,6 @@
 import Wrapper from "@/components/Wrapper";
-import { SUPPORT } from "@/constants/pages";
-import { Container, Typography } from "@mui/material";
+import { CONTACT_EMAIL, SUPPORT } from "@/constants/pages";
+import { Container, Link, Typography } from "@mui/material";
 import { ArrowRightOutlined } from "@mui/icons-material";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
 import { SupportButton } from "@/components/SupportButton";
@@ -45,7 +45,7 @@ export default function Support() {
         }}
       >
         <SupportItem text="Something broken?" sx={{ mt: 4 }} />
-        <SupportItem text="Have a questions?" />
+        <SupportItem text="Have a question?" />
         <SupportItem text="Want a new feature?" />
         <Typography
           variant="body1"
@@ -58,6 +58,9 @@ export default function Support() {
           Please,
         </Typography>
         <SupportButton />
+        <Typography variant="body1" textAlign="center" sx={{ mt: 2 }}>
+          or <Link href={`mailto:${CONTACT_EMAIL}`}>email us</Link>
+        </Typography>
       </Container>
     </Wrapper>
   );

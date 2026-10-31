@@ -27,6 +27,14 @@ export const DISCLAIMER = {
   name: "Disclaimer",
   route: "/disclaimer",
 };
+// Linked from the footer only, not the header navigation.
+export const PRIVACY = {
+  name: "Privacy",
+  route: "/privacy",
+};
+
+// Shown as link text such as "email us", never as the bare address.
+export const CONTACT_EMAIL = "evan.a.b.projects+ic@gmail.com";
 
 export const INCOME_TAX_CALCULATOR_SHORT_TITLE = "Calculator";
 

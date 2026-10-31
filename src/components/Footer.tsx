@@ -4,16 +4,18 @@ import MuiLink from "@mui/material/Link";
 import { Box, Divider } from "@mui/material";
 import type { NavPage } from "@/types";
 import Link from "next/link";
-import { DEVELOPERS } from "@/constants/pages";
+import { DEVELOPERS, PRIVACY } from "@/constants/pages";
 import { SupportButton } from "./SupportButton";
 
 type FooterProps = {
   pages: NavPage[];
+  /** The page being shown, so the footer can leave out its own link. */
+  currentPage: string;
 };
 
 type FooterLink = { name: string; href: string; external?: boolean };
 
-export default function Footer({ pages }: FooterProps) {
+export default function Footer({ pages, currentPage }: FooterProps) {
   const visiblePages = pages.filter(({ selected }) => !selected);
   const toLink = ({ name, route }: NavPage): FooterLink => ({
     name,
@@ -21,11 +23,14 @@ export default function Footer({ pages }: FooterProps) {
   });
 
   // The MCP link goes last, after the external Open Source link, matching its
-  // place at the end of the header navigation.
+  // place at the end of the header navigation. Privacy is footer-only.
   const links: FooterLink[] = [
     ...visiblePages
       .filter(({ route }) => route !== DEVELOPERS.route)
       .map(toLink),
+    ...(currentPage === PRIVACY.name
+      ? []
+      : [{ name: PRIVACY.name, href: PRIVACY.route }]),
     {
       name: "Open Source",
       href: process.env.NEXT_PUBLIC_REPO ?? "",
