@@ -20,6 +20,7 @@ import { CITY_TAXES } from "@/constants/pages";
 import type { TaxData } from "@/types";
 import { ALL_STATES } from "@/constants/states";
 import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
+import PageHeading from "./PageHeading";
 
 interface City {
   cityKey: string;
@@ -40,12 +41,15 @@ interface CityTaxesProps {
   availableYears: string[];
   defaultYear: string;
   cityTaxList: CityTaxListData;
+  /** The h1 for the page as built. Defaults to the year's list. */
+  heading?: string;
 }
 
 export default function CityTaxes({
   availableYears,
   defaultYear,
   cityTaxList: initialCityTaxList,
+  heading,
 }: CityTaxesProps) {
   const [year, setYear] = useState(defaultYear);
   const [cityTaxList, setCityTaxList] = useState(initialCityTaxList);
@@ -190,10 +194,14 @@ export default function CityTaxes({
 
   return (
     <Box>
-      <Typography variant="body1" sx={{ mb: 3, color: "text.secondary" }}>
-        Explore U.S. cities that impose local income taxes and view their tax
-        structures.
-      </Typography>
+      <PageHeading
+        title={
+          year === defaultYear && heading
+            ? heading
+            : `${year} ${CITY_TAXES.name}`
+        }
+        intro="Explore U.S. cities that impose local income taxes and view their tax structures."
+      />
       {/* A four-option dropdown does not need the full page width. */}
       <Box sx={{ mb: 3, maxWidth: 220 }}>
         <YearSelect

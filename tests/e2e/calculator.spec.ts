@@ -7,7 +7,20 @@ test("has expected title and heading", async ({ page }) => {
   await expect(page).toHaveTitle(/Income Tax Calculator/);
 
   await expect(
-    page.getByRole("heading", { name: "Income Tax Calculator" }),
+    page.getByRole("heading", { level: 1, name: "Income Tax Calculator" }),
+  ).toBeVisible();
+});
+
+test("a city page names its place in the heading and introduction", async ({
+  page,
+}) => {
+  await page.goto("/2025/ohio/columbus/");
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "2025 Columbus, Ohio Income Tax Calculator",
+  );
+  await expect(
+    page.getByText(/^Columbus, Ohio levies a city income tax of 2\.5% in 2025/),
   ).toBeVisible();
 });
 

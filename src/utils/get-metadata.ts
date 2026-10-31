@@ -18,14 +18,6 @@ export const defaultMetadata: Metadata = {
   creator: "Evan Bonsignori",
   authors: [{ name: "Evan Bonsignori", url: "https://evan.bio" }],
   applicationName: "Income Tax Calculator",
-  keywords: [
-    "Income Tax",
-    "City",
-    "City Income Tax",
-    "US Income Tax",
-    "State Income Tax",
-    "Take Home Pay",
-  ],
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16" },
@@ -131,9 +123,10 @@ export function getPageSpecificMetadata(
   // Params are already in dash-case, which matches our OG image filenames
 
   if (pageName === COMPARE.name) {
-    description =
-      "Compare take home pay across states and cities, including local taxes.";
-    openGraph.title = COMPARE.name;
+    description = year
+      ? `Compare take home pay across states and cities for the year ${year}, including local taxes.`
+      : "Compare take home pay across states and cities, including local taxes.";
+    openGraph.title = year ? `${year} ${COMPARE.name}` : COMPARE.name;
     openGraph.images = `/og-images/compare.png`;
   }
 

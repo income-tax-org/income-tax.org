@@ -128,7 +128,7 @@ export default function Developers() {
           textAlign="center"
           sx={{ mb: 2 }}
         >
-          API &amp; MCP
+          API &amp; MCP Server
         </Typography>
         <Typography variant="body1" textAlign="center" sx={{ mb: 5 }}>
           A free JSON API for AI assistants, agents and scripts, also available

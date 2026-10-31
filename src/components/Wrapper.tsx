@@ -147,7 +147,16 @@ export default function Wrapper({
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" noWrap sx={{ flexGrow: 1 }} component="h1">
+            {/*
+              Not a heading: it repeats on every page, so it named none of
+              them. Each page renders its own h1 (see PageHeading).
+            */}
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{ flexGrow: 1 }}
+              component="div"
+            >
               {title}
             </Typography>
             {/*

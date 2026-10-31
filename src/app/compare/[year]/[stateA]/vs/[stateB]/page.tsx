@@ -1,8 +1,15 @@
 import Compare from "@/components/compare/Compare";
+import JsonLd from "@/components/JsonLd";
 import Wrapper from "@/components/Wrapper";
+import { getComparePairIntro } from "@/utils/get-page-intro";
 import { COMPARE } from "@/constants/pages";
 import { canonicalPairOrder, comparablePairs } from "@/constants/compare-pairs";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
+import {
+  compareBreadcrumbs,
+  pageInfoFromMetadata,
+  webApplicationJsonLd,
+} from "@/utils/structured-data";
 import { getComparePageData } from "@/utils/get-page-data";
 import { readTaxDataFromDisk } from "@/data-loaders/read-from-disk";
 import {
@@ -30,13 +37,22 @@ export default async function ComparePairPage({
     { state: dashToSnakeCase(params.stateA), city: "" },
     { state: dashToSnakeCase(params.stateB), city: "" },
   ];
+  const page = pageInfoFromMetadata(await generateMetadata({ params }));
 
   return (
     <Wrapper title={titleFor(params)} activePage={COMPARE.name}>
+      <JsonLd
+        data={[
+          webApplicationJsonLd(page),
+          compareBreadcrumbs(params.year, params.stateA, params.stateB),
+        ]}
+      />
       <Compare
         {...data}
         defaultLocations={defaultLocations}
         canonicalPath={`${COMPARE.route}/${params.year}/${params.stateA}/vs/${params.stateB}`}
+        heading={titleFor(params)}
+        intro={await getComparePairIntro(params)}
       />
     </Wrapper>
   );
@@ -60,17 +76,24 @@ export async function generateStaticParams(): Promise<PairParams[]> {
 export async function generateMetadata({ params }: { params: PairParams }) {
   const title = titleFor(params);
   const [first, second] = canonicalPairOrder(params.stateA, params.stateB);
+  const canonical = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://income-tax.org"}${COMPARE.route}/${params.year}/${first}/vs/${second}/`;
+  const description = `Compare take home pay, effective tax rate and every federal, state and local tax between ${snakeToTitleCase(
+    dashToSnakeCase(params.stateA),
+  )} and ${snakeToTitleCase(dashToSnakeCase(params.stateB))} for ${params.year}.`;
+  const pageMetadata = getPageSpecificMetadata(COMPARE.name);
   return {
     title,
     ...defaultMetadata,
-    ...getPageSpecificMetadata(COMPARE.name),
+    ...pageMetadata,
     // After the spreads: both orderings of a pair exist, and this points the
     // non-alphabetical one at its twin rather than letting them compete.
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://income-tax.org"}${COMPARE.route}/${params.year}/${first}/vs/${second}/`,
+    alternates: { canonical },
+    description,
+    openGraph: {
+      ...pageMetadata.openGraph,
+      title,
+      description,
+      url: canonical,
     },
-    description: `Compare take home pay, effective tax rate and every federal, state and local tax between ${snakeToTitleCase(
-      dashToSnakeCase(params.stateA),
-    )} and ${snakeToTitleCase(dashToSnakeCase(params.stateB))} for ${params.year}.`,
   };
 }

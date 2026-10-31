@@ -1,8 +1,14 @@
 import TaxTables from "@/components/TaxTables";
+import JsonLd from "@/components/JsonLd";
 import Wrapper from "@/components/Wrapper";
 import { TAX_TABLES } from "@/constants/pages";
 import type { YearPageProps } from "@/types/page";
 import { defaultMetadata, getPageSpecificMetadata } from "@/utils/get-metadata";
+import {
+  pageInfoFromMetadata,
+  taxTablesBreadcrumbs,
+  webPageJsonLd,
+} from "@/utils/structured-data";
 import {
   getYearPageData,
   getTaxTablesStatesAndCities,
@@ -12,8 +18,10 @@ import { getYearPageParams } from "@/utils/get-page-params";
 export default async function TaxTableYear({ params }: YearPageProps) {
   const data = await getYearPageData(params);
   const statesAndCitiesForYear = await getTaxTablesStatesAndCities();
+  const page = pageInfoFromMetadata(await generateMetadata({ params }));
   return (
     <Wrapper title={TAX_TABLES.name}>
+      <JsonLd data={[webPageJsonLd(page), taxTablesBreadcrumbs(params.year)]} />
       <TaxTables {...data} statesAndCitiesForYear={statesAndCitiesForYear} />
     </Wrapper>
   );

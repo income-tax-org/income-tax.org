@@ -16,6 +16,12 @@ test("a statically generated pair page loads both states and keeps its URL", asy
   await page.waitForTimeout(1500);
 
   await expect(page).toHaveTitle(/Texas vs California/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Texas vs California Income Tax (2026)",
+  );
+  await expect(
+    page.getByText(/^In 2026, Texas has no state income tax, while California/),
+  ).toBeVisible();
   await expect(rows(page)).toHaveCount(2);
 
   // The pretty path is the point of these pages; it must not rewrite itself

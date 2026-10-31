@@ -22,7 +22,7 @@ async function settle(page: Page) {
 async function expectOnCalculator(page: Page) {
   await expect(page).toHaveTitle(/Income Tax Calculator/);
   await expect(
-    page.getByRole("heading", { name: "Income Tax Calculator" }),
+    page.getByRole("heading", { level: 1, name: "Income Tax Calculator" }),
   ).toBeVisible();
 }
 

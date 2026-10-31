@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getPageSpecificMetadata } from "@/utils/get-metadata";
 import {
   CITY_TAXES,
+  COMPARE,
   DEVELOPERS,
   DISCLAIMER,
   INCOME_TAX_CALCULATOR,
@@ -95,6 +96,15 @@ describe("canonical URLs", () => {
       getPageSpecificMetadata(TAX_TABLES.name, latestYear),
     );
     expect(calculator).not.toBe(taxTables);
+  });
+
+  it("gives an older compare year its own canonical, and the newest the root", () => {
+    expect(canonicalOf(getPageSpecificMetadata(COMPARE.name, "2025"))).toBe(
+      `${SITE_URL}${COMPARE.route}/2025/`,
+    );
+    expect(canonicalOf(getPageSpecificMetadata(COMPARE.name, latestYear))).toBe(
+      `${SITE_URL}${COMPARE.route}/`,
+    );
   });
 });
 

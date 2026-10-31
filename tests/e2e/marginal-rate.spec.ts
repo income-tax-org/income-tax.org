@@ -85,8 +85,9 @@ test("a state's own bands are available too", async ({ page }) => {
   await page.getByRole("option", { name: "Oregon State Income" }).click();
   await page.waitForTimeout(400);
 
-  // Oregon's top band, which a $250,000 income reaches.
-  await expect(page.getByText("9.9%")).toBeVisible();
+  // Oregon's top band, which a $250,000 income reaches. Exact: the page's
+  // introduction quotes the same rate inside a sentence.
+  await expect(page.getByText("9.9%", { exact: true })).toBeVisible();
   await expect(page.locator('dt[aria-current="true"]')).toHaveCount(1);
 });
 

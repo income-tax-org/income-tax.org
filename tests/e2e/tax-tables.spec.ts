@@ -7,7 +7,7 @@ test("has expected title and heading", async ({ page }) => {
   await expect(page).toHaveTitle(/Income Tax Tables/);
 
   await expect(
-    page.getByRole("heading", { name: "Income Tax Tables" }),
+    page.getByRole("heading", { level: 1, name: "Income Tax Tables" }),
   ).toBeVisible();
 });
 

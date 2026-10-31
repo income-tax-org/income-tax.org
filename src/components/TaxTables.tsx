@@ -43,6 +43,8 @@ import { TaxDataSelect } from "./input/TaxDataSelect";
 import { getQueryParams, updateURL } from "@/utils/url";
 import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
 import { asCurrency, formatMoneyNoCents } from "@/utils/money";
+import { placeHeading } from "@/utils/page-heading";
+import PageHeading from "./PageHeading";
 
 type TaxTableProps = {
   availableYears: string[];
@@ -52,6 +54,10 @@ type TaxTableProps = {
   defaultStateTaxes: TaxData;
   defaultUSAState?: string | undefined;
   defaultUSACity?: string;
+  /** The h1 for the page as built; derived from the selection otherwise. */
+  heading?: string;
+  /** Introduces the place the page was built for. */
+  intro?: string;
 };
 
 const taxDataMap = {
@@ -89,6 +95,8 @@ export default function TaxTables({
   defaultYear,
   defaultUSAState,
   defaultUSACity,
+  heading,
+  intro,
 }: TaxTableProps) {
   const [year, setYear] = useState(defaultYear);
   const [USAState, setUSAState] = useState(defaultUSAState || "");
@@ -402,12 +410,26 @@ export default function TaxTables({
     return selected;
   }, [taxTables, taxDataTables, federalTaxes]);
 
+  // As in the calculator: the selection changes in place, so the heading
+  // follows it and the place-specific introduction gives way to the generic one.
+  const showsBuiltPlace =
+    year === defaultYear &&
+    USAState === (defaultUSAState || "") &&
+    USACity === (defaultUSACity || "");
+
   return (
     <>
-      <Typography variant="body1" sx={{ mb: 3, color: "text.secondary" }}>
-        View detailed tax brackets, rates, and deductions for federal, state,
-        and city taxes.
-      </Typography>
+      <PageHeading
+        title={
+          showsBuiltPlace && heading
+            ? heading
+            : placeHeading(TAX_TABLES.name, year, USAState, USACity)
+        }
+        intro={
+          (showsBuiltPlace && intro) ||
+          "View detailed tax brackets, rates, and deductions for federal, state, and city taxes."
+        }
+      />
       <Grid container spacing={2} columns={13}>
         <Grid item xs={13} sm={3}>
           <YearSelect

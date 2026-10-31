@@ -33,6 +33,9 @@ import type { PaycheckFrequency } from "@/constants/paycheck-frequency";
 import { MONTHLY } from "@/constants/paycheck-frequency";
 import { updateURL, getQueryParams, parseIncomeParam } from "@/utils/url";
 import { useUrlSelectionOnPopState } from "@/hooks/use-url-selection";
+import { INCOME_TAX_CALCULATOR } from "@/constants/pages";
+import { placeHeading } from "@/utils/page-heading";
+import PageHeading from "./PageHeading";
 
 type CalculatorProps = {
   availableYears: string[];
@@ -42,6 +45,10 @@ type CalculatorProps = {
   defaultStateTaxes: TaxData;
   defaultUSAState?: string | undefined;
   defaultUSACity?: string;
+  /** The h1 for the page as built; derived from the selection otherwise. */
+  heading?: string;
+  /** Introduces the place the page was built for. */
+  intro?: string;
 };
 
 export default function Calculator({
@@ -52,6 +59,8 @@ export default function Calculator({
   defaultYear,
   defaultUSAState,
   defaultUSACity,
+  heading,
+  intro,
 }: CalculatorProps) {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalIRA, setTotalIRA] = useState(0);
@@ -196,6 +205,18 @@ export default function Calculator({
     validateAll();
   }, [validateAll]);
 
+  // Picking another place rewrites the URL without leaving the page, so the
+  // heading follows the selection, and the introduction, which describes the
+  // place the page was built for, steps aside.
+  const showsBuiltPlace =
+    year === defaultYear &&
+    USAState === (defaultUSAState || "") &&
+    USACity === (defaultUSACity || "");
+  const title =
+    showsBuiltPlace && heading
+      ? heading
+      : placeHeading(INCOME_TAX_CALCULATOR.name, year, USAState, USACity);
+
   let resultsRender = null;
   if (totalIncome) {
     resultsRender = (
@@ -217,6 +238,11 @@ export default function Calculator({
 
   return (
     <>
+      <PageHeading
+        title={title}
+        intro={showsBuiltPlace ? intro : undefined}
+        sx={{ maxWidth: 900, mx: "auto" }}
+      />
       {/*
         Capped independently of the page container: the container widened so
         the breakdown can use a large screen, but a 600px-wide text field is

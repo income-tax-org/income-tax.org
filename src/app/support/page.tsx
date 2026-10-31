@@ -33,8 +33,8 @@ function SupportItem({ text, sx }: { text: string; sx?: object }) {
 export default function Support() {
   return (
     <Wrapper title={SUPPORT.name}>
-      <Typography variant="h2" textAlign="center">
-        Need Help?
+      <Typography variant="h2" component="h1" textAlign="center">
+        Support
       </Typography>
       <Container
         maxWidth="xs"

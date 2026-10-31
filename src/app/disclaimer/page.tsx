@@ -12,12 +12,21 @@ export default function Disclaimer() {
   return (
     <Wrapper title={DISCLAIMER.name}>
       <Container maxWidth="md">
-        <Typography variant="h2" textAlign="center" sx={{ mb: 4 }}>
+        <Typography
+          variant="h2"
+          component="h1"
+          textAlign="center"
+          sx={{ mb: 4 }}
+        >
           Disclaimer
         </Typography>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             Not Professional Tax Advice
           </Typography>
           <Typography variant="body1" paragraph>
@@ -31,7 +40,11 @@ export default function Disclaimer() {
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             No Guarantee of Accuracy
           </Typography>
           <Typography variant="body1" paragraph>
@@ -45,7 +58,11 @@ export default function Disclaimer() {
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             What This Calculator Simplifies
           </Typography>
           <Typography variant="body1" paragraph>
@@ -87,7 +104,11 @@ export default function Disclaimer() {
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             Not for Legal or Financial Decisions
           </Typography>
           <Typography variant="body1" paragraph>
@@ -111,7 +132,11 @@ export default function Disclaimer() {
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             Consult a Professional
           </Typography>
           <Typography variant="body1" paragraph>
@@ -124,7 +149,11 @@ export default function Disclaimer() {
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             Limitation of Liability
           </Typography>
           <Typography variant="body1" paragraph>
@@ -137,7 +166,11 @@ export default function Disclaimer() {
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ mb: 2, fontWeight: "bold" }}
+          >
             User Responsibility
           </Typography>
           <Typography variant="body1" paragraph>

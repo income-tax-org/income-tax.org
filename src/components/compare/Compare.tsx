@@ -50,6 +50,7 @@ import { FilingStatusSelect } from "@/components/input/FilingStatusSelect";
 import { HELPER_TEXT_SPACER } from "@/components/input/HelperTextSpacer";
 import { CompareRow } from "./CompareRow";
 import { LocationPicker } from "./LocationPicker";
+import PageHeading from "@/components/PageHeading";
 
 type CompareProps = {
   availableYears: string[];
@@ -65,6 +66,10 @@ type CompareProps = {
    * immediately rewrite itself to a query string.
    */
   canonicalPath?: string;
+  /** The h1 for the page as built. Defaults to the year's comparison. */
+  heading?: string;
+  /** Introduces the pair a statically generated pair page was built for. */
+  intro?: string;
 };
 
 /** Shown when the compared states do not share one standard deduction. */
@@ -77,6 +82,8 @@ export default function Compare({
   defaultFederalTaxes,
   defaultLocations = [],
   canonicalPath,
+  heading,
+  intro,
 }: CompareProps) {
   const [year, setYear] = useState(defaultYear);
   const [income, setIncome] = useState(150_000);
@@ -298,8 +305,23 @@ export default function Compare({
     [availableStatesAndCities],
   );
 
+  // The selection changes in place. A pair page's heading and introduction
+  // describe its pair, so they give way once the places or year change.
+  const showsBuiltPage =
+    year === defaultYear &&
+    (!canonicalPath ||
+      (locations.length === defaultLocations.length &&
+        locations.every(
+          (location, i) =>
+            locationId(location) === locationId(defaultLocations[i]),
+        )));
+
   return (
     <Box>
+      <PageHeading
+        title={showsBuiltPage && heading ? heading : `${year} ${COMPARE.name}`}
+        intro={showsBuiltPage ? intro : undefined}
+      />
       <Box
         sx={{
           display: "grid",

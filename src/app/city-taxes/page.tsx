@@ -8,7 +8,7 @@ export default async function CityTaxesPage() {
   const data = await getCityTaxListData();
   return (
     <Wrapper title={CITY_TAXES.name}>
-      <CityTaxes {...data} />
+      <CityTaxes {...data} heading={CITY_TAXES.name} />
     </Wrapper>
   );
 }
