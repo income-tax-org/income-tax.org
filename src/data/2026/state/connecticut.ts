@@ -55,11 +55,14 @@ export default {
   // Table A keys on Connecticut AGI; the calculator picks the band with
   // income after retirement contributions, its AGI proxy.
   //
-  // Source: Form CT-1040 TCS, "Table A - Personal Exemptions". The 2026 TCS
-  // is not published yet; 12-702 sets these amounts with no scheduled change
-  // or inflation indexing, and Table A is identical in the 2023, 2024 and
-  // 2025 TCS, so 2026 repeats 2025.
-  // https://portal.ct.gov/-/media/drs/forms/2025/income/ct-1040-tcs_1225.pdf
+  // Source: Form CT-1040ES (Rev. 01/26), "Table A - Personal Exemptions for
+  // 2026 Taxable Year", checked row by row 2026-10-30 -- identical to the
+  // 2023, 2024 and 2025 CT-1040 TCS Table A. IP 2026(7) (issued 12/12/2025)
+  // prints the same table. The 2026 CT-1040 TCS is not published yet; OLR's
+  // "2026 Acts Affecting Taxes" (2026-R-0076) lists no change to the
+  // exemption or the rates from the 2026 session.
+  // https://portal.ct.gov/-/media/drs/forms/2025/income/ct1040es-flat0126.pdf
+  // https://portal.ct.gov/-/media/drs/publications/pubsip/2026/ip-2026-7.pdf
   [STANDARD_DEDUCTION]: {
     [SINGLE]: [
       { min: 0, max: 30001, amount: 15000 },
@@ -106,6 +109,13 @@ export default {
       { min: 56001, max: INFINITY, amount: 0 },
     ],
   },
+  // Verified 2026-10-30 against Form CT-1040ES (Rev. 01/26), "Table B -
+  // Initial Tax Calculation for 2026 Taxable Year": every threshold and rate
+  // below, for all three of its schedules (single and married filing
+  // separately share one). Not modelled: the 2% phase-out add-back, tax
+  // recapture and personal tax credits (Tables C, D and E), which Table B
+  // itself excludes.
+  // https://portal.ct.gov/-/media/drs/forms/2025/income/ct1040es-flat0126.pdf
   [STATE_INCOME]: {
     [SINGLE]: [
       { min: 0, max: 10000, rate: 2 },

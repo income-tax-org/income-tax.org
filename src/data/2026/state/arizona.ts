@@ -22,8 +22,16 @@ export default {
   // the last of those including the OBBBA increase -- so the federal figure
   // is the best-grounded stand-in rather than a guess. Re-check when the
   // TY2026 booklet appears.
+  //
+  // Checked again 2026-10-30, still unpublished by ADOR. The statute now
+  // points the same way: Laws 2026, Ch. 140 (HB 4168, approved 2026-06-13),
+  // Sec. 16 resets A.R.S. 43-1041(A) to $15,750 / $23,625 / $31,500 from TY2025
+  // (Sec. 35), and 43-1041(H) indexes those "in the same manner in which the
+  // federal basic standard deduction is adjusted for inflation pursuant to
+  // section 63" -- the adjustment that takes the federal $15,750 to $16,100.
   // Sources: https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2026_140ESBooklet.pdf
   //          https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2025_140Booklet.pdf
+  //          https://www.azleg.gov/legtext/57leg/2R/laws/0140.pdf
   [STANDARD_DEDUCTION]: {
     [SINGLE]: 16100,
     [MARRIED]: 32200,

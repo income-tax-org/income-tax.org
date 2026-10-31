@@ -167,7 +167,7 @@ test("multiple tables displayed for multiple tax types", async ({ page }) => {
 
   await expect(
     page.locator("tr#oregon_state_income_row_2").locator("td").nth(2),
-  ).toHaveText("$21,501 - $250,000");
+  ).toHaveText("$20,401 - $250,000");
 });
 
 test("tax data for deductions is displayed", async ({ page }) => {

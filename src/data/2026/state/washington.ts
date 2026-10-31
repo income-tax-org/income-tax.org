@@ -15,6 +15,11 @@ export default {
   },
   [CAPITAL_GAINS]: {
     // 2026 standard deduction unpublished; CARRIED FROM 2025 ($278,000).
+    // Checked 2026-10-30: DOR's "Updated Amounts" table still ends at 2025.
+    // RCW 82.87.150(1) requires DOR to post each October's adjustment "by
+    // October 31st", taking effect for taxes due the following calendar year
+    // -- so the TY2026 figure is due 2026-10-31. Re-check then.
+    // https://dor.wa.gov/taxes-rates/other-taxes/capital-gains-tax/do-you-owe-capital-gains-tax
     // The 9.9% tier is SB 5813's surcharge above $1,000,000 of Washington
     // capital gains, i.e. the deduction plus $1,000,000.
     [ALL]: [

@@ -36,7 +36,10 @@ export default {
   // $20, so 4,650 is likely low too. 4680 is 4,560 scaled by the confirmed
   // single-filer increase, which also preserves the ~1.61x head-of-household
   // ratio Oregon has held since 2023. Re-check against Table 5 when the
-  // 2026 OR-40 instructions publish.
+  // 2026 OR-40 instructions publish. Checked 2026-10-30: still not posted
+  // (form-or-40-inst_101-040-1_2026.pdf is a 404), and no later revision of
+  // OR-ESTIMATE or the withholding formulas prints a head-of-household
+  // figure; the same holds for the MFS subtraction and the $263 credit below.
   [STANDARD_DEDUCTION]: {
     [SINGLE]: 2910,
     [MARRIED]: 5820,
@@ -124,6 +127,15 @@ export default {
       { min: 200001, max: INFINITY, amount: 0 },
     ],
   },
+  // Verified 2026-10-30 against two DOR documents that agree: Publication
+  // OR-ESTIMATE 2026 (150-101-026, Rev. 10-07-25), rate charts S and J
+  // ("Not over $4,550 ... Over $11,400 but not over $125,000" single and
+  // separate; "$9,100 ... $22,800 ... $250,000" joint, head of household and
+  // surviving spouse), and the 2026 withholding tax formulas (150-206-436,
+  // Rev. 12-31-25), which use 4,550 / 11,400 and 9,100 / 22,800. The $125,000
+  // and $250,000 top thresholds are not indexed. Re-check against the 2026
+  // OR-40 tax rate charts when they publish.
+  // https://www.oregon.gov/dor/forms/FormsPubs/publication-or-estimate_101-026_2026.pdf
   [STATE_INCOME]: {
     [SINGLE]: [
       { min: 0, max: 4550, rate: 4.75 },

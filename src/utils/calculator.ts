@@ -356,10 +356,10 @@ export function calculateTaxesPerBracket(
     taxesPerBracket[taxType] = calculateTaxBracket(incomeBase, brackets);
   });
 
-  // Oregon's exemption credit comes off the state's own income tax: never
-  // below zero, since it is nonrefundable, and never off payroll or local
-  // taxes. Applied before the city pass so that a surcharge levied on the
-  // state's tax would see the tax after credits.
+  // A state's exemption credit (California, Nebraska, Oregon) comes off its
+  // own income tax: never below zero, since it is nonrefundable, and never off
+  // payroll or local taxes. Applied before the city pass so that a surcharge
+  // levied on the state's tax would see the tax after credits.
   let personalExemptionCredit = 0;
   const stateIncomeTaxBeforeCredits = taxesPerBracket[STATE_INCOME];
   if (

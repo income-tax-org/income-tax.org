@@ -5,7 +5,11 @@ import {
   MARRIED_SEPARATELY,
   SINGLE,
 } from "@/constants/filing-status";
-import { STANDARD_DEDUCTION, STATE_INCOME } from "@/constants/tax-types";
+import {
+  PERSONAL_EXEMPTION_CREDIT,
+  STANDARD_DEDUCTION,
+  STATE_INCOME,
+} from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
 export default {
@@ -66,5 +70,24 @@ export default {
       { min: 38590, max: 57630, rate: 5.01 },
       { min: 57630, max: INFINITY, rate: 5.2 },
     ],
+  },
+  // Personal exemption credit, Form 1040N line 18: "$171 times the number on
+  // line 4". DOR's Tax Rate Chronology (Table 1) prints the same $171 for 2025.
+  // Line 4 counts yourself (4a), a spouse on a joint return (4b) and
+  // dependents (4c). Dependents are not modelled, so this is one exemption,
+  // or two filing jointly -- Neb. Rev. Stat. 77-2716.01(1)(b): "plus two for
+  // a married filing jointly return or plus one for any other return".
+  // Nonrefundable, off Nebraska tax only; the form floors tax after
+  // nonrefundable credits at zero. No AGI limit: the Chronology notes the
+  // credit "was phased out as federal AGI increased for higher income
+  // taxpayers through tax year 2005", and neither 77-2716.01(1)(b) nor the
+  // form carries any limit now.
+  // Source: https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/f_1040N.pdf
+  //         https://nebraskalegislature.gov/laws/statutes.php?statute=77-2716.01
+  [PERSONAL_EXEMPTION_CREDIT]: {
+    [SINGLE]: 171,
+    [MARRIED]: 342,
+    [MARRIED_SEPARATELY]: 171,
+    [HEAD_OF_HOUSEHOLD]: 171,
   },
 } as TaxData;

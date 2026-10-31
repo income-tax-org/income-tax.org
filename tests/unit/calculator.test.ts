@@ -21,6 +21,8 @@ import ohio2025 from "@/data/2025/state/ohio";
 import ohio2026 from "@/data/2026/state/ohio";
 import illinois2025 from "@/data/2025/state/illinois";
 import newJersey2025 from "@/data/2025/state/new_jersey";
+import california2025 from "@/data/2025/state/california";
+import nebraska2025 from "@/data/2025/state/nebraska";
 import {
   SINGLE,
   MARRIED,
@@ -2249,6 +2251,77 @@ describe("Calculator Audit Tests", () => {
       expect(
         toUnit(without.totalState.amount) - toUnit(withIt.totalState.amount),
       ).toBeCloseTo(256, 2);
+    });
+  });
+
+  // Form 540 line 32 and Form 1040N line 18: both come off the state's own
+  // income tax, like Oregon's.
+  describe("California's and Nebraska's exemption credits", () => {
+    const run = (
+      data: TaxData,
+      state: string,
+      income: number,
+      filingStatus: FilingStatus = SINGLE,
+    ) =>
+      calculate(
+        federal2025,
+        data,
+        income,
+        filingStatus,
+        0,
+        undefined,
+        undefined,
+        [],
+        state,
+        "",
+      );
+    const withoutCredit = (data: TaxData) =>
+      ({ ...data, [PERSONAL_EXEMPTION_CREDIT]: undefined }) as TaxData;
+    const stateIncomeTaxOf = (results: ReturnType<typeof calculate>) =>
+      toUnit(results.stateResults[STATE_INCOME] as Money);
+
+    it.each([
+      ["california", california2025, SINGLE, 153],
+      ["california", california2025, MARRIED, 306],
+      ["nebraska", nebraska2025, SINGLE, 171],
+      ["nebraska", nebraska2025, MARRIED, 342],
+    ])(
+      "takes %s's 2025 credit off its income tax (%s gets %i)",
+      (state, data, filingStatus, credit) => {
+        const results = run(
+          data as TaxData,
+          state as string,
+          80000,
+          filingStatus as FilingStatus,
+        );
+        expect(results.statePersonalExemptionCredit).toBe(credit);
+        expect(stateIncomeTaxOf(results)).toBeCloseTo(
+          stateIncomeTaxOf(
+            run(
+              withoutCredit(data as TaxData),
+              state as string,
+              80000,
+              filingStatus as FilingStatus,
+            ),
+          ) - (credit as number),
+          2,
+        );
+      },
+    );
+
+    it("phases California's out in the middle of the taper", () => {
+      // AGI 7,797 over the $252,203 threshold: ceil(7,797 / 2,500) = 4
+      // steps of $6.
+      expect(
+        run(california2025, "california", 260000).statePersonalExemptionCredit,
+      ).toBe(129);
+    });
+
+    it("gives Nebraska's in full at any income", () => {
+      expect(
+        run(nebraska2025, "nebraska", 1_000_000, MARRIED)
+          .statePersonalExemptionCredit,
+      ).toBe(342);
     });
   });
 });

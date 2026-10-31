@@ -131,6 +131,9 @@ export default {
   // below; the other 86 matched. Six counties raised their rate for 2026
   // (Carroll .024733, Grant .0275, Greene .0235, Howard .0235, Shelby .017,
   // Union .0275) and the file already had those.
+  // Re-checked 2026-10-30 against DN #1 R47 / 10-26, effective Oct. 1, 2026:
+  // Boone is the only county marked as changed since Jan. 1 (see its entry);
+  // the other 91 still match. Still no 2026 CT-40.
   [CITIES]: {
     [ADAMS_COUNTY]: {
       [COUNTY_INCOME]: {
@@ -158,6 +161,11 @@ export default {
       },
     },
     [BOONE_COUNTY]: {
+      // PROVISIONAL. 1.7 is the Jan. 1, 2026 rate. DN #1 R47 / 10-26 prints
+      // "Boone 06 0.0171*" from Oct. 1, 2026, so the annual rate will be a
+      // nine-month / three-month blend that only the 2026 CT-40 can give.
+      // Left at the Jan. 1 rate until CT-40 publishes it; do not compute the
+      // blend here.
       [COUNTY_INCOME]: {
         [ALL]: [{ min: 0, max: INFINITY, rate: 1.7 }],
       },

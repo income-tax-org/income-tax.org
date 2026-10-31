@@ -103,29 +103,34 @@ export default {
       { min: 200001, max: INFINITY, amount: 0 },
     ],
   },
+  // Publication OR-17 (2025), "Marginal tax rates" four-year table, 2025
+  // column: single and separate "First $4,400 ... $4,401–$11,100"; joint, head
+  // of household and surviving spouse "First $8,800 ... $8,801–$22,200". Until
+  // 2026-10-30 this file carried 2024's 4,300 / 10,750.
+  // https://www.oregon.gov/dor/forms/FormsPubs/publication-or-17_101-431_2025.pdf
   [STATE_INCOME]: {
     [SINGLE]: [
-      { min: 0, max: 4300, rate: 4.75 },
-      { min: 4300, max: 10750, rate: 6.75 },
-      { min: 10750, max: 125000, rate: 8.75 },
+      { min: 0, max: 4400, rate: 4.75 },
+      { min: 4400, max: 11100, rate: 6.75 },
+      { min: 11100, max: 125000, rate: 8.75 },
       { min: 125000, max: INFINITY, rate: 9.9 },
     ],
     [MARRIED]: [
-      { min: 0, max: 8600, rate: 4.75 },
-      { min: 8600, max: 21500, rate: 6.75 },
-      { min: 21500, max: 250000, rate: 8.75 },
+      { min: 0, max: 8800, rate: 4.75 },
+      { min: 8800, max: 22200, rate: 6.75 },
+      { min: 22200, max: 250000, rate: 8.75 },
       { min: 250000, max: INFINITY, rate: 9.9 },
     ],
     [MARRIED_SEPARATELY]: [
-      { min: 0, max: 4300, rate: 4.75 },
-      { min: 4300, max: 10750, rate: 6.75 },
-      { min: 10750, max: 125000, rate: 8.75 },
+      { min: 0, max: 4400, rate: 4.75 },
+      { min: 4400, max: 11100, rate: 6.75 },
+      { min: 11100, max: 125000, rate: 8.75 },
       { min: 125000, max: INFINITY, rate: 9.9 },
     ],
     [HEAD_OF_HOUSEHOLD]: [
-      { min: 0, max: 8600, rate: 4.75 },
-      { min: 8600, max: 21500, rate: 6.75 },
-      { min: 21500, max: 250000, rate: 8.75 },
+      { min: 0, max: 8800, rate: 4.75 },
+      { min: 8800, max: 22200, rate: 6.75 },
+      { min: 22200, max: 250000, rate: 8.75 },
       { min: 250000, max: INFINITY, rate: 9.9 },
     ],
   },

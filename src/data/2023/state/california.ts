@@ -8,6 +8,7 @@ import {
 } from "@/constants/filing-status";
 import {
   CALIFORNIA_SDI,
+  PERSONAL_EXEMPTION_CREDIT,
   STANDARD_DEDUCTION,
   STATE_INCOME,
 } from "@/constants/tax-types";
@@ -47,9 +48,8 @@ export default {
   // one shape this data model has. Do not carry 13.3% into anything that
   // means to quote the FTB rate schedule.
   //
-  // Not modelled: California's exemption credits (Form 540 line 32), which
-  // are per-taxpayer dollar credits against tax rather than a deduction, and
-  // so cannot be expressed as brackets.
+  // California's exemption credits (Form 540 line 32) are dollar credits
+  // against tax, not brackets; see PERSONAL_EXEMPTION_CREDIT below.
   [STATE_INCOME]: {
     [SINGLE]: [
       { min: 0, max: 10412, rate: 1 },
@@ -98,6 +98,79 @@ export default {
       { min: 569790, max: 949649, rate: 11.3 },
       { min: 949649, max: 1000000, rate: 12.3 },
       { min: 1000000, max: INFINITY, rate: 13.3 },
+    ],
+  },
+  // Personal exemption credit: Form 540 line 7, "X $144" per credit -- one
+  // for single, separate and head of household, two for a joint return, so
+  // $288 there. Nonrefundable, off California tax only (line 33: "If less
+  // than zero, enter -0-").
+  //
+  // It tapers above a federal AGI threshold. The line 32 AGI Limitation
+  // Worksheet: c = AGI - $237,035 (single, separate), $474,075 (joint) or
+  // $355,558 (head of household); d = c / $2,500 ($1,250 separate), "round
+  // it to the next higher whole number"; e = d x $6; g = e x the number of
+  // credits on lines 7-9; i = credits - g, "If zero or less, enter -0-".
+  // Line g is why a joint return loses $12 a step and every other return $6.
+  //
+  // Rounding up is the Connecticut problem (2026/state/connecticut.ts):
+  // `reduce_per` counts whole steps down. So each taper band starts one
+  // dollar above the threshold with one step already taken off. It runs to
+  // INFINITY and the default floor of 0 ends the credit; there is no zero
+  // band, which the app would read as an AGI cliff. Checked against the
+  // worksheet at every dollar through each phase-out.
+  //   Single at $250,000: c = 12,965, d = 6 (5.19 rounded up),
+  //   144 - 36 = $108; band: floor((250,000 - 237,036) / 2,500) = 5
+  //   steps off 138 = $108.
+  //   Joint at $500,000: c = 25,925, d = 11, 288 - 132 = $156; band:
+  //   floor((500,000 - 474,076) / 2,500) = 10 steps off 276 = $156.
+  //
+  // The band is picked by income after retirement contributions, the AGI
+  // proxy. The credit is gone long before $1,000,000, so it never offsets the
+  // 1% surcharge folded into the top bracket. Not modelled: the blind,
+  // senior and dependent credits (lines 8-10), limited the same way.
+  // Source: 2023 Form 540 booklet, line 32 instructions and AGI Limitation
+  // Worksheet; Form 540 line 7.
+  // https://www.ftb.ca.gov/forms/2023/2023-540-booklet.pdf
+  [PERSONAL_EXEMPTION_CREDIT]: {
+    [SINGLE]: [
+      { min: 0, max: 237036, amount: 144 },
+      {
+        min: 237036,
+        max: INFINITY,
+        amount: 138,
+        reduce_per: 2500,
+        reduce_by: 6,
+      },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 474076, amount: 288 },
+      {
+        min: 474076,
+        max: INFINITY,
+        amount: 276,
+        reduce_per: 2500,
+        reduce_by: 12,
+      },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 237036, amount: 144 },
+      {
+        min: 237036,
+        max: INFINITY,
+        amount: 138,
+        reduce_per: 1250,
+        reduce_by: 6,
+      },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 355559, amount: 144 },
+      {
+        min: 355559,
+        max: INFINITY,
+        amount: 138,
+        reduce_per: 2500,
+        reduce_by: 6,
+      },
     ],
   },
   // Verified 2026-09-07: correct. 2023 is the last year with an SDI wage

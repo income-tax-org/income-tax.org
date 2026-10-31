@@ -150,9 +150,11 @@ export function federalTaxSubtractionFor(
  * exemptions, or 0 if it declares none.
  *
  * Oregon's (OR-40 line 25) is an amount per exemption that drops to zero once
- * federal AGI passes a limit -- a cliff, written as bands. The data holds the
- * total for each filing status: one exemption, or two for a joint return.
- * Dependents would add more, but the calculator does not model them.
+ * federal AGI passes a limit -- a cliff, written as bands. California's tapers
+ * off in steps above its AGI threshold instead, and Nebraska's is flat. The
+ * data holds the total for each filing status: one exemption, or two for a
+ * joint return. Dependents would add more, but the calculator does not model
+ * them.
  */
 export function personalExemptionCreditFor(
   taxData: TaxData,

@@ -153,8 +153,8 @@ The core calculation logic is in [src/utils/calculator.ts](./src/utils/calculato
   the files for Functions. See
   [src/data/README.md](./src/data/README.md#sales-tax).
 - **Personal exemption credit**: a state with `personal_exemption_credit`
-  (Oregon) takes a nonrefundable credit off its own income tax only. New
-  config keys like these belong in `NON_TAX_DATA_KEYS` in
+  (California, Nebraska, Oregon) takes a nonrefundable credit off its own
+  income tax only. New config keys like these belong in `NON_TAX_DATA_KEYS` in
   [tax-types.ts](./src/constants/tax-types.ts), which keeps them out of every
   list of taxes.
 

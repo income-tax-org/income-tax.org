@@ -8,31 +8,37 @@ import {
 } from "@/constants/filing-status";
 import {
   CALIFORNIA_SDI,
+  PERSONAL_EXEMPTION_CREDIT,
   STANDARD_DEDUCTION,
   STATE_INCOME,
 } from "@/constants/tax-types";
 import type { TaxData } from "@/types";
 
-// CARRIED FROM 2025 -- brackets and standard deduction only.
+// Brackets and standard deduction verified 2026-10-30 against the FTB's own
+// 2026 publications; until then this file carried the 2025 figures forward.
+// California indexes both under R&TC 17041(h), by 3.4% for 2026 ("the CCPI
+// ... from June 2025 to June 2026, was 3.4%").
 //
-// California indexes both for inflation under R&TC 17041(h), but as of
-// 2026-09-07 the FTB has not published the 2026 figures: there is no 2026 Form
-// 540 booklet, and FTB Tax News carries no indexing announcement. The FTB's
-// own 2026 Form 540-ES worksheet tells taxpayers to estimate 2026 tax with the
-// 2025 standard deduction ($5,706 / $11,412) and the 2025 tax table, which is
-// exactly what this file does.
-// https://www.ftb.ca.gov/forms/2026/2026-540-es-instructions.pdf
-//
-// Revisit once the 2026 540 booklet is posted (typically December).
+// Standard deduction: FTB Tax News, October 2026, "2026 Indexing" -- "$5,706
+// $5,900" for single or married filing separate, "$11,412 $11,800" for joint,
+// surviving spouse, or head of household.
+// https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html
 export default {
   [STANDARD_DEDUCTION]: {
-    [SINGLE]: 5706,
-    [MARRIED]: 11412,
-    [MARRIED_SEPARATELY]: 5706,
-    [HEAD_OF_HOUSEHOLD]: 11412,
+    [SINGLE]: 5900,
+    [MARRIED]: 11800,
+    [MARRIED_SEPARATELY]: 5900,
+    [HEAD_OF_HOUSEHOLD]: 11800,
   },
-  // Bracket boundaries are the verified 2025 ones (see the 2025 file for the
-  // Schedule X / Y / Z cross-check against the cumulative tax column).
+  // Source: 2026 California Tax Rate Schedules (Personal Income Tax Booklet
+  // 2026), Schedules X, Y and Z.
+  // https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf
+  // Verified: the schedules' cumulative "Enter on Form 540, line 31" column
+  // reconciles with these boundaries to the cent in X and Y, and in Z except
+  // for one row a cent off ($53,563.49 printed against $53,563.484) -- a
+  // rounding artefact, since a dollar's boundary error would move it ~10
+  // cents. Each X and Z boundary is the 2025 one times 1.034, rounded to the
+  // dollar; Y is exactly twice X.
   //
   // The 13.3% top band is the 12.3% statutory top rate plus the 1% surcharge
   // on taxable income over $1,000,000 (R&TC 17043), now called the Behavioral
@@ -40,8 +46,7 @@ export default {
   // the threshold is not doubled for a joint return. The surcharge was missing
   // from this year entirely, so every filer above $1,000,000 was undertaxed by
   // a percentage point; added 2026-09-07 to match the 2023 file. Unlike the
-  // bracket boundaries the $1,000,000 threshold is statutory, not indexed, so
-  // it is not provisional.
+  // bracket boundaries the $1,000,000 threshold is statutory, not indexed.
   //
   // Read this band as what it is: a 1% surcharge on taxable income above
   // $1,000,000, levied separately on Form 540 line 62. It is not a statutory
@@ -50,57 +55,138 @@ export default {
   // one shape this data model has. Do not carry 13.3% into anything that
   // means to quote the FTB rate schedule.
   //
-  // Not modelled: California's exemption credits (Form 540 line 32), which
-  // are per-taxpayer dollar credits against tax rather than a deduction, and
-  // so cannot be expressed as brackets.
+  // California's exemption credits (Form 540 line 32) are dollar credits
+  // against tax, not brackets; see PERSONAL_EXEMPTION_CREDIT below.
   [STATE_INCOME]: {
     [SINGLE]: [
-      { min: 0, max: 11079, rate: 1 },
-      { min: 11079, max: 26264, rate: 2 },
-      { min: 26264, max: 41452, rate: 4 },
-      { min: 41452, max: 57542, rate: 6 },
-      { min: 57542, max: 72724, rate: 8 },
-      { min: 72724, max: 371479, rate: 9.3 },
-      { min: 371479, max: 445771, rate: 10.3 },
-      { min: 445771, max: 742953, rate: 11.3 },
-      { min: 742953, max: 1000000, rate: 12.3 },
+      { min: 0, max: 11456, rate: 1 },
+      { min: 11456, max: 27157, rate: 2 },
+      { min: 27157, max: 42861, rate: 4 },
+      { min: 42861, max: 59498, rate: 6 },
+      { min: 59498, max: 75197, rate: 8 },
+      { min: 75197, max: 384109, rate: 9.3 },
+      { min: 384109, max: 460927, rate: 10.3 },
+      { min: 460927, max: 768213, rate: 11.3 },
+      { min: 768213, max: 1000000, rate: 12.3 },
       { min: 1000000, max: INFINITY, rate: 13.3 },
     ],
     [MARRIED]: [
-      { min: 0, max: 22158, rate: 1 },
-      { min: 22158, max: 52528, rate: 2 },
-      { min: 52528, max: 82904, rate: 4 },
-      { min: 82904, max: 115084, rate: 6 },
-      { min: 115084, max: 145448, rate: 8 },
-      { min: 145448, max: 742958, rate: 9.3 },
-      { min: 742958, max: 891542, rate: 10.3 },
-      { min: 891542, max: 1000000, rate: 11.3 },
-      { min: 1000000, max: 1485906, rate: 12.3 },
-      { min: 1485906, max: INFINITY, rate: 13.3 },
+      { min: 0, max: 22912, rate: 1 },
+      { min: 22912, max: 54314, rate: 2 },
+      { min: 54314, max: 85722, rate: 4 },
+      { min: 85722, max: 118996, rate: 6 },
+      { min: 118996, max: 150394, rate: 8 },
+      { min: 150394, max: 768218, rate: 9.3 },
+      { min: 768218, max: 921854, rate: 10.3 },
+      { min: 921854, max: 1000000, rate: 11.3 },
+      { min: 1000000, max: 1536426, rate: 12.3 },
+      { min: 1536426, max: INFINITY, rate: 13.3 },
     ],
     [MARRIED_SEPARATELY]: [
-      { min: 0, max: 11079, rate: 1 },
-      { min: 11079, max: 26264, rate: 2 },
-      { min: 26264, max: 41452, rate: 4 },
-      { min: 41452, max: 57542, rate: 6 },
-      { min: 57542, max: 72724, rate: 8 },
-      { min: 72724, max: 371479, rate: 9.3 },
-      { min: 371479, max: 445771, rate: 10.3 },
-      { min: 445771, max: 742953, rate: 11.3 },
-      { min: 742953, max: 1000000, rate: 12.3 },
+      { min: 0, max: 11456, rate: 1 },
+      { min: 11456, max: 27157, rate: 2 },
+      { min: 27157, max: 42861, rate: 4 },
+      { min: 42861, max: 59498, rate: 6 },
+      { min: 59498, max: 75197, rate: 8 },
+      { min: 75197, max: 384109, rate: 9.3 },
+      { min: 384109, max: 460927, rate: 10.3 },
+      { min: 460927, max: 768213, rate: 11.3 },
+      { min: 768213, max: 1000000, rate: 12.3 },
       { min: 1000000, max: INFINITY, rate: 13.3 },
     ],
     [HEAD_OF_HOUSEHOLD]: [
-      { min: 0, max: 22173, rate: 1 },
-      { min: 22173, max: 52530, rate: 2 },
-      { min: 52530, max: 67716, rate: 4 },
-      { min: 67716, max: 83805, rate: 6 },
-      { min: 83805, max: 98990, rate: 8 },
-      { min: 98990, max: 505208, rate: 9.3 },
-      { min: 505208, max: 606251, rate: 10.3 },
-      { min: 606251, max: 1000000, rate: 11.3 },
-      { min: 1000000, max: 1010417, rate: 12.3 },
-      { min: 1010417, max: INFINITY, rate: 13.3 },
+      { min: 0, max: 22927, rate: 1 },
+      { min: 22927, max: 54316, rate: 2 },
+      { min: 54316, max: 70018, rate: 4 },
+      { min: 70018, max: 86654, rate: 6 },
+      { min: 86654, max: 102356, rate: 8 },
+      { min: 102356, max: 522385, rate: 9.3 },
+      { min: 522385, max: 626864, rate: 10.3 },
+      { min: 626864, max: 1000000, rate: 11.3 },
+      { min: 1000000, max: 1044771, rate: 12.3 },
+      { min: 1044771, max: INFINITY, rate: 13.3 },
+    ],
+  },
+  // Personal exemption credit: Form 540 line 7, "X $158" per credit -- one
+  // for single, separate and head of household, two for a joint return, so
+  // $316 there. Nonrefundable, off California tax only (line 33: "If less
+  // than zero, enter -0-").
+  //
+  // It tapers above a federal AGI threshold. The line 32 AGI Limitation
+  // Worksheet: c = AGI - $260,778 (single, separate), $521,561 (joint) or
+  // $391,173 (head of household); d = c / $2,500 ($1,250 separate), "round
+  // it to the next higher whole number"; e = d x $6; g = e x the number of
+  // credits on lines 7-9; i = credits - g, "If zero or less, enter -0-".
+  // Line g is why a joint return loses $12 a step and every other return $6.
+  //
+  // Rounding up is the Connecticut problem (2026/state/connecticut.ts):
+  // `reduce_per` counts whole steps down. So each taper band starts one
+  // dollar above the threshold with one step already taken off. It runs to
+  // INFINITY and the default floor of 0 ends the credit; there is no zero
+  // band, which the app would read as an AGI cliff. Checked against the
+  // worksheet at every dollar through each phase-out.
+  //   Single at $270,000: c = 9,222, d = 4 (3.69 rounded up),
+  //   158 - 24 = $134; band: floor((270,000 - 260,779) / 2,500) = 3
+  //   steps off 152 = $134.
+  //   Joint at $550,000: c = 28,439, d = 12, 316 - 144 = $172; band:
+  //   floor((550,000 - 521,562) / 2,500) = 11 steps off 304 = $172.
+  //
+  // The band is picked by income after retirement contributions, the AGI
+  // proxy. The credit is gone long before $1,000,000, so it never offsets the
+  // 1% surcharge folded into the top bracket. Not modelled: the blind,
+  // senior and dependent credits (lines 8-10), limited the same way.
+  //
+  // Amounts: FTB Tax News, October 2026, "2026 Indexing" -- personal
+  // exemption credit "$153 $158", joint "$306 $316".
+  // https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html
+  // Thresholds PROVISIONAL: FTB memo "Indexing, Personal Income Tax Law,
+  // 2026 Tax Year" (2026-09-03), "Reduction of Exemption Credits": $260,778
+  // single and separate, $391,173 head of household, $521,561 joint, and
+  // "$6 ($12 joint)" per $2,500 ($1,250 separate). The memo is FTB's own but
+  // is not on ftb.ca.gov; this copy is CalTax's. Each threshold is the 2025
+  // one times 1.034, rounded -- the factor Tax News publishes. Re-check
+  // against the 2026 540 booklet's worksheet (FTB: "late December").
+  // https://www.caltax.org/regulatory-issues/ftb/2026-PIT-Indexing-Memo.pdf
+  [PERSONAL_EXEMPTION_CREDIT]: {
+    [SINGLE]: [
+      { min: 0, max: 260779, amount: 158 },
+      {
+        min: 260779,
+        max: INFINITY,
+        amount: 152,
+        reduce_per: 2500,
+        reduce_by: 6,
+      },
+    ],
+    [MARRIED]: [
+      { min: 0, max: 521562, amount: 316 },
+      {
+        min: 521562,
+        max: INFINITY,
+        amount: 304,
+        reduce_per: 2500,
+        reduce_by: 12,
+      },
+    ],
+    [MARRIED_SEPARATELY]: [
+      { min: 0, max: 260779, amount: 158 },
+      {
+        min: 260779,
+        max: INFINITY,
+        amount: 152,
+        reduce_per: 1250,
+        reduce_by: 6,
+      },
+    ],
+    [HEAD_OF_HOUSEHOLD]: [
+      { min: 0, max: 391174, amount: 158 },
+      {
+        min: 391174,
+        max: INFINITY,
+        amount: 152,
+        reduce_per: 2500,
+        reduce_by: 6,
+      },
     ],
   },
   // Verified 2026-09-07: correct, and not carried -- this is the published

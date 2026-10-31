@@ -304,13 +304,18 @@ user enters, and city taxes that start from state taxable income see it.
 `personal_exemption_credit` is a nonrefundable credit taken off the state's
 computed income tax — not off income, and not off payroll or local taxes. That
 is what separates it from the personal *exemptions* above, which reduce income
-and live in `standard_deduction`. Oregon's is the only one so far (Form OR-40
-line 25).
+and live in `standard_deduction`. Three states carry one: Oregon (Form OR-40
+line 25), California (Form 540 line 32) and Nebraska (Form 1040N line 18).
 
 Same shape again: an amount per filing status, or bands chosen by the AGI
 proxy. Hold the **total** for the filer: one exemption, two for a joint return.
-Dependents would add one each, but the calculator does not model them. Oregon's
-credit stops entirely once federal AGI is "more than $100,000" ($200,000 for
+Dependents would add one each, but the calculator does not model them.
+
+Nebraska's is the simple case, a flat amount with no income limit
+(`[MARRIED]: 352` for 2026, twice the single `176`). The other two write their
+AGI limits as bands, in two different shapes.
+
+**A cliff.** Oregon's credit stops entirely once federal AGI is "more than $100,000" ($200,000 for
 joint and head of household), so it is a cliff — and because the limit itself
 still qualifies, the zero band starts one dollar up:
 
@@ -331,6 +336,31 @@ still qualifies, the zero band starts one dollar up:
 A cliff makes the marginal rate meaningless across it — one dollar over the
 limit costs the whole credit — which the marginal-rate display flags as
 spanning a rate change.
+
+**A stepped taper.** California's credit shrinks instead. Form 540's AGI
+Limitation Worksheet takes the AGI over the threshold, divides by $2,500
+($1,250 separate), rounds "to the next higher whole number", and takes $6 per
+step for each credit — so $12 a step on a joint return, which holds two. That
+is the "or fraction thereof" rounding Connecticut's exemption has, and
+`reduce_per` counts whole steps *down*, so write it the way
+[2026/state/connecticut.ts](./2026/state/connecticut.ts) does: start the taper
+band one dollar above the threshold with one step already taken off, and let it
+run to `INFINITY`. California 2025, single:
+
+```typescript
+[SINGLE]: [
+  { min: 0,      max: 252204,   amount: 153 },   // "more than $252,203" is limited
+  { min: 252204, max: INFINITY, amount: 147, reduce_per: 2500, reduce_by: 6 },
+],
+```
+
+At $260,000 the worksheet gives 7,797 over, 3.12 steps rounded up to 4, and
+153 − 24 = $129; the band gives floor((260,000 − 252,204) / 2,500) = 3 steps
+off 147, also $129. The default `floor` of 0 ends the credit — at $314,704
+here, where the 26th $6 step passes $153 — so the taper needs no zero band
+after it. Don't add one: a band with `amount: 0` is how a cliff is written, and
+the app warns about any cliff near the filer's income, so it would flag a fake
+$3 cliff at the end of the taper.
 
 For example a `federal.ts` file might contain part of this object,
 

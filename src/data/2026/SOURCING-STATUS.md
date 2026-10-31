@@ -4,7 +4,7 @@ Source-of-truth tracker for the 2026 tax-year data build. Records what has
 been populated, what source each figure came from, and anything **unsourced or
 not yet finalized** by the taxing authority. Update this file as data lands.
 
-Last updated: 2026-09-08 (second sweep — the 14 states the first audit never opened, plus an independent engine review)
+Last updated: 2026-10-30 (third sweep — every provisional, carried or derived 2026 figure re-checked against the newest official documents; see [Third sweep](#third-sweep-2026-10-30))
 
 ## How to read this
 
@@ -44,99 +44,109 @@ Each file's header names its sources (state revenue department rate tables
 and download files first). Figures were gathered by one agent per batch of
 states and spot-checked by a second agent against a different source.
 
-| Item                     | Status          | Notes                                                                              |
-| ------------------------ | --------------- | ---------------------------------------------------------------------------------- |
-| State and city rates     | done            | through Q4 2026                                                                    |
-| No-city fallback         | done            | Tax Foundation average local rate, Jan and Jul                                     |
-| Default taxable spending | **provisional** | CARRIED FROM 2025: IRS 2025 Optional Sales Tax Tables                              |
-| Arizona, December 2026   | **provisional** | ADOR's December table was unpublished; November rates assumed to hold              |
-| Nevada                   | done            | no rate document dated 2026; no change notices found, rates unchanged since 2020   |
-| District of Columbia     | done            | 6% all of 2025-2026; the increases to 6.5% and 7% were both postponed (OTR notice) |
+| Item                     | Status          | Notes                                                                                                                                              |
+| ------------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| State and city rates     | done            | through Q4 2026                                                                                                                                    |
+| No-city fallback         | done            | Tax Foundation average local rate, Jan and Jul                                                                                                     |
+| Default taxable spending | **provisional** | CARRIED FROM 2025: IRS 2025 Optional Sales Tax Tables. Checked 2026-10-30: no 2026 Schedule A instructions, not even a draft                       |
+| Arizona, December 2026   | **provisional** | ADOR's December table still unpublished 2026-10-30; November rates assumed to hold. ADOR's December change list has only a Camp Verde lodging rate |
+| Nevada                   | done            | no rate document dated 2026; no change notices found, rates unchanged since 2020                                                                   |
+| District of Columbia     | done            | 6% all of 2025-2026; the increases to 6.5% and 7% were both postponed (OTR notice)                                                                 |
 
 ## States (50 + DC)
 
 All 51 files present and the repo validator (`npm run validate-tax-data`)
 passes. 50 states were drafted by the Sonnet fan-out; Oregon pre-existed.
-**6 files carry at least one provisional figure** — listed in detail below.
+**8 files carry at least one provisional figure** as of 2026-10-30 (arizona, arkansas, idaho, indiana, oregon, vermont, washington, and alabama's survey-only small towns) — see [Third sweep](#third-sweep-2026-10-30).
 
-| State                | Status          | Notes                                                                                                                                                                         |
-| -------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| alabama              | done            | rates + brackets unchanged; SD & city occupational rates confirmed                                                                                                            |
-| alaska               | no-tax          | NONE                                                                                                                                                                          |
-| arizona              | done            | flat 2.5%; SD updated to OBBBA amounts                                                                                                                                        |
-| arkansas             | done            | SD + bracket thresholds inflation-updated; top rate 3.9%                                                                                                                      |
-| california           | done            | brackets/SD not indexed (= 2025); SDI rate 1.2%→1.3%; Mental Health Services surcharge added 2026-09-07 (1% over $1M, all statuses)                                           |
-| colorado             | done            | flat 4.4%; OPT city rates carried (municipality-set)                                                                                                                          |
-| connecticut          | **provisional** | all values carried from 2025 — CT DOR 2026 circular not yet published                                                                                                         |
-| delaware             | done            | brackets/SD unchanged; Wilmington wage tax corrected 1.5%→1.25% (2025 file was wrong)                                                                                         |
-| district_of_columbia | done            | brackets/SD unchanged; PFL 0.75% confirmed                                                                                                                                    |
-| florida              | no-tax          | NONE                                                                                                                                                                          |
-| georgia              | done            | HB 463: flat rate 5.19%→4.99%, SD raised (retroactive to 2026-01-01)                                                                                                          |
-| hawaii               | done            | Act 46 SD phase-in; brackets confirmed                                                                                                                                        |
-| idaho                | done            |                                                                                                                                                                               |
-| illinois             | done            | flat rate                                                                                                                                                                     |
-| indiana              | done            | flat rate                                                                                                                                                                     |
-| iowa                 | done            |                                                                                                                                                                               |
-| kansas               | done            |                                                                                                                                                                               |
-| kentucky             | done            | flat rate                                                                                                                                                                     |
-| louisiana            | done            |                                                                                                                                                                               |
-| maine                | done            |                                                                                                                                                                               |
-| maryland             | done            |                                                                                                                                                                               |
-| massachusetts        | done            |                                                                                                                                                                               |
-| michigan             | done            | flat rate                                                                                                                                                                     |
-| minnesota            | done            |                                                                                                                                                                               |
-| mississippi          | done            |                                                                                                                                                                               |
-| missouri             | done            |                                                                                                                                                                               |
-| montana              | done            |                                                                                                                                                                               |
-| nebraska             | **provisional** | LB754 rate cut to 4.55% confirmed; HOH standard deduction derived (DOR publishes only single/joint)                                                                           |
-| nevada               | no-tax          | NONE                                                                                                                                                                          |
-| new_hampshire        | no-tax          | interest/dividends structure retained                                                                                                                                         |
-| new_jersey           | done            |                                                                                                                                                                               |
-| new_mexico           | done            |                                                                                                                                                                               |
-| new_york             | done            |                                                                                                                                                                               |
-| north_carolina       | done            | flat rate                                                                                                                                                                     |
-| north_dakota         | done            |                                                                                                                                                                               |
-| ohio                 | done            |                                                                                                                                                                               |
-| oklahoma             | done            |                                                                                                                                                                               |
-| oregon               | done            | pre-existing 2026 file (still verify against final 2026 figures)                                                                                                              |
-| pennsylvania         | done            | flat 3.07% confirmed; all 14 municipal rates verified against the DCED register 2026-09-07 (3 corrected); Philadelphia carries the start-of-year rate per the repo convention |
-| rhode_island         | done            |                                                                                                                                                                               |
-| south_carolina       | done            |                                                                                                                                                                               |
-| south_dakota         | no-tax          | NONE                                                                                                                                                                          |
-| tennessee            | no-tax          | NONE                                                                                                                                                                          |
-| texas                | no-tax          | NONE                                                                                                                                                                          |
-| utah                 | done            | flat rate                                                                                                                                                                     |
-| vermont              | **provisional** | corrected 2025 official schedule carried forward (fan-out's derived 2026 numbers were backwards); revisit when VT publishes 2026                                              |
-| virginia             | done            |                                                                                                                                                                               |
-| washington           | **provisional** | no wage tax; WA Cares 0.58% confirmed; capital-gains SD threshold carried from 2025 (2026 indexed amount unpublished)                                                         |
-| west_virginia        | done            |                                                                                                                                                                               |
-| wisconsin            | done            | Single/Married from Tax Foundation 2026; MFS (=Married/2) and HOH (=Single) derived per 2025 pattern — flagged as derived                                                     |
-| wyoming              | no-tax          | NONE                                                                                                                                                                          |
+| State                | Status          | Notes                                                                                                                                                                                                    |
+| -------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| alabama              | done            | rates + brackets unchanged; SD & city occupational rates confirmed                                                                                                                                       |
+| alaska               | no-tax          | NONE                                                                                                                                                                                                     |
+| arizona              | **provisional** | flat 2.5%; SD = federal 2026 amounts, ADOR figure unpublished (checked 2026-10-30) though Laws 2026 Ch. 140 indexes it like the federal one                                                              |
+| arkansas             | **provisional** | top rate 3.7% (Act 1, 2026 1st Ex. Sess.); SD $2,470 from withholding / 2026 AR1000ES only — 2026 AR1000F instructions unpublished (checked 2026-10-30)                                                  |
+| california           | done            | brackets + SD from FTB 2026 Tax Rate Schedules and Tax News Oct 2026 (2026-10-30; were carried from 2025); SDI 1.3%; 1% surcharge over $1M                                                               |
+| colorado             | done            | flat 4.4%; OPT city rates carried (municipality-set)                                                                                                                                                     |
+| connecticut          | done            | 2026 Tables A and B in CT-1040ES (Rev. 01/26) match the file exactly; no 2026-session change (OLR 2026-R-0076) — checked 2026-10-30                                                                      |
+| delaware             | done            | brackets/SD unchanged; Wilmington wage tax corrected 1.5%→1.25% (2025 file was wrong)                                                                                                                    |
+| district_of_columbia | done            | brackets/SD unchanged; PFL 0.75% confirmed                                                                                                                                                               |
+| florida              | no-tax          | NONE                                                                                                                                                                                                     |
+| georgia              | done            | HB 463: flat rate 5.19%→4.99%, SD raised (retroactive to 2026-01-01)                                                                                                                                     |
+| hawaii               | done            | Act 46 SD phase-in; brackets confirmed                                                                                                                                                                   |
+| idaho                | **provisional** | 5.3% confirmed (EPB00744); zero-rate bracket top CARRIED FROM 2025 — 2026 figure unpublished (checked 2026-10-30)                                                                                        |
+| illinois             | done            | flat rate                                                                                                                                                                                                |
+| indiana              | **provisional** | 92 county rates from DN #1 (no 2026 CT-40 yet); Boone changed Oct. 1, 2026 (DN #1 R47) and needs CT-40's blend                                                                                           |
+| iowa                 | done            |                                                                                                                                                                                                          |
+| kansas               | done            |                                                                                                                                                                                                          |
+| kentucky             | done            | flat rate                                                                                                                                                                                                |
+| louisiana            | done            |                                                                                                                                                                                                          |
+| maine                | done            |                                                                                                                                                                                                          |
+| maryland             | done            |                                                                                                                                                                                                          |
+| massachusetts        | done            |                                                                                                                                                                                                          |
+| michigan             | done            | flat rate                                                                                                                                                                                                |
+| minnesota            | done            |                                                                                                                                                                                                          |
+| mississippi          | done            |                                                                                                                                                                                                          |
+| missouri             | done            |                                                                                                                                                                                                          |
+| montana              | done            |                                                                                                                                                                                                          |
+| nebraska             | done            | LB754 rate cut to 4.55% confirmed; HOH SD $12,950 now printed by DOR in the 2026 1040N-ES (2026-10-30), matching the derived value                                                                       |
+| nevada               | no-tax          | NONE                                                                                                                                                                                                     |
+| new_hampshire        | no-tax          | interest/dividends structure retained                                                                                                                                                                    |
+| new_jersey           | done            |                                                                                                                                                                                                          |
+| new_mexico           | done            |                                                                                                                                                                                                          |
+| new_york             | done            |                                                                                                                                                                                                          |
+| north_carolina       | done            | flat rate                                                                                                                                                                                                |
+| north_dakota         | done            |                                                                                                                                                                                                          |
+| ohio                 | done            |                                                                                                                                                                                                          |
+| oklahoma             | done            |                                                                                                                                                                                                          |
+| oregon               | **provisional** | brackets, single/joint SD, transit, PFML, local layer sourced; HOH SD, MFS federal-tax-subtraction cap and $263 exemption credit await the 2026 OR-40 instructions (checked 2026-10-30)                  |
+| pennsylvania         | done            | flat 3.07%; all 14 municipal rates verified against the DCED register 2026-09-07 (3 corrected); Philadelphia carries the start-of-year 3.74% per the repo convention (3.735% from 2026-07-01, phila.gov) |
+| rhode_island         | done            | SD + exemption, phase-out and brackets from ADV 2025-22 (re-verified 2026-10-30); TDI 1.1% to $100,000                                                                                                   |
+| south_carolina       | done            | Act 110 of 2026: 1.99% / 5.21% − $966 and the phasing SCIAD, per SC IL #26-20 (re-verified 2026-10-30)                                                                                                   |
+| south_dakota         | no-tax          | NONE                                                                                                                                                                                                     |
+| tennessee            | no-tax          | NONE                                                                                                                                                                                                     |
+| texas                | no-tax          | NONE                                                                                                                                                                                                     |
+| utah                 | done            | flat rate                                                                                                                                                                                                |
+| vermont              | **provisional** | brackets = 2026 IN-114 "Preliminary" rates; SD derived from GB-1210; TaxRateSched-2026 and IN-111-2026 still 404 (checked 2026-10-30)                                                                    |
+| virginia             | done            |                                                                                                                                                                                                          |
+| washington           | **provisional** | no wage tax; WA Cares 0.58% confirmed; capital-gains SD CARRIED FROM 2025 — DOR must post the 2026 amount by 2026-10-31 (RCW 82.87.150), not yet up 2026-10-30                                           |
+| west_virginia        | done            |                                                                                                                                                                                                          |
+| wisconsin            | done            | all four statuses (SD bands and brackets) printed in the 2026 Form 1-ES; MFS and HOH no longer derived (checked 2026-10-30)                                                                              |
+| wyoming              | no-tax          | NONE                                                                                                                                                                                                     |
 
 ## Provisional detail (revisit before relying on these)
 
-- **connecticut** — Entire schedule carried from 2025. CT enacted no 2026
-  changes per Tax Foundation, but the official IP-2026(7) withholding circular
-  confirming final thresholds was not published at build time.
-- **nebraska** — LB754 rate cut (top rate → 4.55%, 4→3 brackets) and
-  single/joint standard deductions confirmed from DOR. **HOH standard
-  deduction ($12,950) is derived** by applying the 2025 HOH/single ratio to
-  the 2026 single amount — DOR does not publish an HOH figure.
-- **pennsylvania** — State flat 3.07% confirmed. **Philadelphia resident wage
-  tax changes mid-year** (3.74% through 2026-06-30, then 3.735% from
-  2026-07-01); the file carries 3.74%. Other municipal rates carried from 2025.
-- **vermont** — Single/MFJ from official 2026 withholding instructions
-  (GB-1210-2026); MFS = MFJ/2 (verified pattern). **HOH thresholds are
-  estimated** via inflation-scaling until the return-filing rate schedule
-  (TaxRateSched-2026.pdf) is posted.
-- **washington** — No wage income tax. WA Cares 0.58% and capital-gains rates
-  confirmed. **Capital-gains standard-deduction threshold carried from the
-  2025 file** ($270,000) because the 2026 indexed amount is unpublished. Note
-  the agent observed the 2025 file itself may lag the true 2025 figure
-  ($278,000) — worth a separate check.
-- **wisconsin** — Single/Married brackets + SD from Tax Foundation 2026.
-  **MFS (=Married/2) and HOH (=Single) thresholds are derived** per the 2025
-  file's pattern, not directly published by WI DOR.
+Rewritten 2026-10-30. Every item below was checked that day; the evidence is
+in [Third sweep](#third-sweep-2026-10-30). Items resolved since the first
+draft of this list (connecticut, nebraska, wisconsin, california, Rhode Island
+and South Carolina deductions, Pennsylvania municipal rates) are recorded
+there too.
+
+- **vermont** — Brackets are the "2026 Preliminary Vermont Tax Rates" in the
+  2026 IN-114 instructions (Rev. 10/25); the standard deduction is derived
+  from GB-1210-2026's withholding thresholds (single 3,925 x 2, joint
+  11,775 / 0.75) and head of household from the statute. TaxRateSched-2026
+  and IN-111-2026 are still 404. TaxTables-2026 on the "2026 VT Tax Tables"
+  page is the withholding percentage table, not a rate schedule.
+- **washington** — Capital-gains standard deduction $278,000 CARRIED FROM 2025. RCW 82.87.150 has DOR post the TY2026 amount by 2026-10-31; not up on
+  2026-10-30.
+- **oregon** — Head-of-household standard deduction (4,680, derived), the
+  married-filing-separately federal-tax-subtraction cap (4,375, half the cap)
+  and the $263 exemption credit (withholding figure) await the 2026 OR-40
+  instructions (404 on 2026-10-30).
+- **arizona** — Standard deduction = federal 2026 amounts; ADOR publishes the
+  Arizona figure only in the TY2026 Form 140 booklet (January 2027).
+- **arkansas** — Standard deduction $2,470 rests on the withholding formula
+  and the 2026 AR1000ES worksheet; the 2026 AR1000F instructions are
+  unpublished.
+- **idaho** — Zero-rate bracket top (4,811 / 9,622) CARRIED FROM 2025; the
+  Tax Commission's rate-schedule page still ends at 2025.
+- **indiana** — No 2026 Schedule CT-40 yet. Boone moved to 1.71% on
+  2026-10-01 (DN #1 R47 / 10-26), so its annual rate will be a CT-40 blend;
+  the file keeps the January 1 rate, 1.7%.
+- **pennsylvania** — Not provisional; noted for the convention. Philadelphia's
+  resident wage tax was 3.74% on 2026-01-01 and 3.735% from 2026-07-01
+  (phila.gov rate table); the file carries 3.74% per the start-of-year
+  convention.
 
 ## Data-quality flags found in the 2025 source files
 
@@ -167,13 +177,13 @@ A repo-wide audit found tax types that were present in 2023/2024 and silently
 absent from 2025 and 2026 — the 2025 files dropped them and the 2026 fan-out
 inherited the omission. Restored in **both** years, with sources:
 
-| Entry                                            | Restored value                                                         | Source                                                                                               |
-| ------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| colorado / `colorado_famli`                      | 0.45% (2025) / 0.44% (2026) employee share, capped at the SS wage base | famli.colorado.gov; total premium 0.9% → 0.88% for 2026                                              |
-| connecticut / `ct_paid_family_and_medical_leave` | 0.5%, capped at the SS wage base                                       | ctpaidleave.org — Board held the rate at 0.5% for 2026                                               |
-| hawaii / `hi_temporary_disability_insurance`     | 0.5% up to $74,969 (2025) / $78,010 (2026)                             | labor.hawaii.gov max weekly wage base $1,441.72 / $1,500.21                                          |
-| rhode_island / `standard_deduction`              | 10,900 / 21,800 / 10,900 / 16,350                                      | 2025 RI-1040 instructions. **2026 CARRIED FROM 2025**                                                |
-| south_carolina / `standard_deduction`            | 15,000 / 30,000 / 15,000 / 22,500                                      | SC conforms to the IRC as of 2024-12-31 and adds back the OBBBA increase. **2026 CARRIED FROM 2025** |
+| Entry                                            | Restored value                                                         | Source                                                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| colorado / `colorado_famli`                      | 0.45% (2025) / 0.44% (2026) employee share, capped at the SS wage base | famli.colorado.gov; total premium 0.9% → 0.88% for 2026                                                    |
+| connecticut / `ct_paid_family_and_medical_leave` | 0.5%, capped at the SS wage base                                       | ctpaidleave.org — Board held the rate at 0.5% for 2026                                                     |
+| hawaii / `hi_temporary_disability_insurance`     | 0.5% up to $74,969 (2025) / $78,010 (2026)                             | labor.hawaii.gov max weekly wage base $1,441.72 / $1,500.21                                                |
+| rhode_island / `standard_deduction`              | 10,900 / 21,800 / 10,900 / 16,350                                      | 2025 RI-1040 instructions. 2026 superseded: ADV 2025-22 (see rhode_island.ts)                              |
+| south_carolina / `standard_deduction`            | 15,000 / 30,000 / 15,000 / 22,500                                      | SC conforms to the IRC as of 2024-12-31 and adds back the OBBBA increase. 2026 superseded by Act 110 SCIAD |
 
 **Confirmed correct as-is** (absence was not a bug): `colorado/aurora` — Aurora
 repealed its occupational privilege tax effective 2025-01-01 (Ordinance
@@ -427,6 +437,9 @@ so its floor is the deduction plus $1,000,000 and moves with it:
 | 2025 | **$278,000**                   | to $1,278,000 | $1,278,000 |
 | 2026 | **$278,000 CARRIED FROM 2025** | to $1,278,000 | $1,278,000 |
 
+Re-checked 2026-10-30: still unpublished; RCW 82.87.150 makes it due by
+2026-10-31.
+
 2026's indexed amount is unpublished. At $300,000 of gains this moved the tax
 from $2,100 to $1,540.
 
@@ -464,7 +477,10 @@ from $2,100 to $1,540.
 - **Opelika 2025** — carries 1%; the true year is 1.5% for Q1 and 1% after.
 - **Portland Arts Tax 2027** — rate and threshold begin indexing.
 - Oregon 2026 was pre-existing and has uncommitted edits; confirm its figures
-  are true 2026 values before final commit.
+  are true 2026 values before final commit. _2026-10-30: brackets and
+  single/joint deduction confirmed; three figures still await the 2026 OR-40
+  instructions (see Provisional detail). Oregon 2023 and 2025 brackets were
+  wrong; fixed 2026-10-30 — see Third sweep._
 
 ---
 
@@ -615,6 +631,8 @@ and New Mexico. Reproduce it and show the arithmetic in the file comment.
   small towns rest on the League survey alone.
 - 2026 head-of-household deductions for **Nebraska** and **Oregon** are
   unsourced — neither state publishes HoH outside a booklet that is not yet out.
+  _2026-10-30: Nebraska resolved — the 2026 1040N-ES prints $12,950. Oregon
+  still open._
 
 ### City/local layer — full sweep results
 
@@ -939,3 +957,102 @@ truthiness anywhere a money figure is being defaulted.
   inventing a rule that appears in no document.
 - **Virginia's deduction increase sunsets after 2026** and reverts to
   $3,000/$6,000 unless extended.
+
+---
+
+## Third sweep (2026-10-30)
+
+Every 2026 figure marked carried, provisional, derived or estimated was
+re-checked against the newest document the taxing authority has published.
+A figure changed only where an official document now prints it. Each PDF was
+pulled and read; web-search summaries were again wrong where tested (a
+Vermont summary quoted 2018-era brackets as 2026, and an Indiana one claimed
+DN #1 shows Howard at .025 — it prints .0235).
+
+### Results
+
+| Item                               | Before                          | After                                     | Source                                                                                                                         | Status      |
+| ---------------------------------- | ------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| california brackets (all statuses) | 2025 carried (11,079 / …)       | 2026 Schedules X/Y/Z (11,456 / …)         | [2026 CA Tax Rate Schedules](https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf), booklet page dated 2026-10-27 | **changed** |
+| california SD                      | 5,706 / 11,412                  | 5,900 / 11,800                            | [FTB Tax News, Oct 2026](https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html)                                      | **changed** |
+| connecticut exemption + brackets   | "carried"                       | unchanged — 2026 tables identical         | [CT-1040ES Rev. 01/26](https://portal.ct.gov/-/media/drs/forms/2025/income/ct1040es-flat0126.pdf) Tables A, B; OLR 2026-R-0076 | done        |
+| nebraska HOH SD                    | 12,950 derived                  | unchanged — now printed                   | [2026 Form 1040N-ES](https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/f_1040N-ES.pdf), line 5               | done        |
+| wisconsin MFS / HOH                | "derived"                       | unchanged — printed                       | [2026 Form 1-ES instructions](https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-inst.pdf), SD schedules + Schedules A–C    | done        |
+| rhode_island SD                    | tracker said carried            | unchanged (file already on ADV 2025-22)   | [ADV 2025-22](https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf)                  | done        |
+| south_carolina SD                  | tracker said carried            | unchanged (file already on Act 110 SCIAD) | [SC IL #26-20](https://dor.sc.gov/sites/dor/files/policies/IL26-20.pdf); Act 110 (H.4216)                                      | done        |
+| pennsylvania / Philadelphia        | 3.74%                           | unchanged — convention confirmed          | [phila.gov wage tax table](https://www.phila.gov/services/payments-assistance-taxes/business-taxes/wage-tax-employers/)        | done        |
+| oregon brackets                    | unsourced comment               | unchanged — two DOR documents agree       | OR-ESTIMATE 2026 (Rev. 10-07-25); withholding formulas 150-206-436 (Rev. 12-31-25)                                             | done        |
+| oregon HOH SD / MFS cap / credit   | derived / derived / withholding | unchanged                                 | 2026 OR-40 instructions 404                                                                                                    | provisional |
+| vermont brackets + SD              | IN-114 preliminary / derived    | unchanged                                 | TaxRateSched-2026, IN-111-2026 404; no 2026 PIT change in Act 164                                                              | provisional |
+| washington cap-gains SD            | 278,000 carried                 | unchanged                                 | DOR table ends at 2025; due by 2026-10-31 (RCW 82.87.150)                                                                      | provisional |
+| arizona SD                         | federal amounts                 | unchanged                                 | ADOR unpublished; Laws 2026 Ch. 140 indexes 43-1041(A) like the federal SD                                                     | provisional |
+| arkansas SD                        | 2,470                           | unchanged                                 | 2026 AR1000F instructions 404; 2026 AR1000ES says $2,470                                                                       | provisional |
+| idaho zero-rate bracket            | 4,811 / 9,622 carried           | unchanged                                 | ISTC rate schedule page ends at 2025                                                                                           | provisional |
+| indiana county rates               | DN #1 R46 / 01-26               | unchanged; Boone flagged                  | DN #1 R47 / 10-26: Boone 0.0171 from 2026-10-01; no 2026 CT-40                                                                 | provisional |
+| sales tax, Arizona December        | November assumed                | unchanged                                 | TPT_RATETABLE_12012026.pdf 404; all 20 cities' Nov CSV rates open-ended                                                        | provisional |
+| sales tax, default spending        | IRS 2025 tables                 | unchanged                                 | no 2026 Schedule A instructions or draft                                                                                       | provisional |
+
+California is the only state whose numbers moved. The FTB memo "Indexing,
+Personal Income Tax Law, 2026 Tax Year" (2026-09-03) carries the same
+schedules and surfaced first, through a CalTax copy; the FTB-hosted booklet
+page above is the source the file cites. The memo footnotes that indexed
+values "are subject to change if legislation passes that impacts the 2026 tax
+year", so compare against the full 540 booklet in December.
+
+### Found outside 2026
+
+- **Oregon 2023 and 2025 brackets were 2024's — fixed 2026-10-30.** All three
+  files carried single 4,300 / 10,750 and joint 8,600 / 21,500. DOR's 2025
+  Publication OR-17 ("Marginal tax rates", four-year table) prints 2023 as
+  4,050 / 10,200 (joint 8,100 / 20,400) and 2025 as 4,400 / 11,100 (joint
+  8,800 / 22,200); only 2024 was right. Each year's OR-40 Chart S / Chart J
+  value at $50,000 ($4,090 / $3,805 for 2023, $4,065 / $3,756 for 2025)
+  reconciles only with the OR-17 boundaries. Both files now carry the OR-17
+  figures; e2e expectations moved by the expected amounts (2023 Portland
+  single at $100,000: take home −$15.99; 2025: +$9.00). `detect-suspect-figures`
+  cannot see this class of error: its repeated-schedule check needs the other
+  boundaries to move, and none of Oregon's do across 2023–2025.
+  https://www.oregon.gov/dor/forms/FormsPubs/publication-or-17_101-431_2025.pdf
+- **Nebraska's personal exemption credit was not modelled in any year — added
+  2026-10-30**, with California's. See below.
+
+### Personal exemption credits: California and Nebraska (2026-10-30)
+
+Both now carry `personal_exemption_credit` in 2023–2026, the shape Oregon's
+already used: the total for the filer, one credit for single, separate and
+head of household and two for a joint return, dependents not modelled, taken
+off state income tax only and never below zero.
+
+| State / year | Status                                    | Credit (S / MFJ / MFS / HOH) | AGI threshold (S, MFS / MFJ / HOH) | Step          | Reduction / step | Source                                                                                                                                                                                                                          |
+| ------------ | ----------------------------------------- | ---------------------------- | ---------------------------------- | ------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CA 2023      | final                                     | 144 / 288 / 144 / 144        | 237,035 / 474,075 / 355,558        | 2,500 (1,250) | $6 ($12 MFJ)     | [2023 540 booklet](https://www.ftb.ca.gov/forms/2023/2023-540-booklet.pdf), line 32 worksheet                                                                                                                                   |
+| CA 2024      | final                                     | 149 / 298 / 149 / 149        | 244,857 / 489,719 / 367,291        | 2,500 (1,250) | $6 ($12 MFJ)     | [2024 540 booklet](https://www.ftb.ca.gov/forms/2024/2024-540-booklet.pdf)                                                                                                                                                      |
+| CA 2025      | final                                     | 153 / 306 / 153 / 153        | 252,203 / 504,411 / 378,310        | 2,500 (1,250) | $6 ($12 MFJ)     | [2025 540 booklet](https://www.ftb.ca.gov/forms/2025/2025-540-booklet.pdf)                                                                                                                                                      |
+| CA 2026      | amounts final; thresholds **provisional** | 158 / 316 / 158 / 158        | 260,778 / 521,561 / 391,173        | 2,500 (1,250) | $6 ($12 MFJ)     | [Tax News Oct 2026](https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html) (amounts); FTB indexing memo 2026-09-03 via [CalTax](https://www.caltax.org/regulatory-issues/ftb/2026-PIT-Indexing-Memo.pdf) (thresholds) |
+| NE 2023      | final                                     | 157 / 314 / 157 / 157        | none                               | —             | —                | [2023 Form 1040N](https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2023/incometax/f_1040N_2023_Final.pdf) line 18                                                                                                 |
+| NE 2024      | final                                     | 166 / 332 / 166 / 166        | none                               | —             | —                | [2024 Form 1040N](https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2024/f_1040N.pdf) line 18                                                                                                                      |
+| NE 2025      | final                                     | 171 / 342 / 171 / 171        | none                               | —             | —                | [2025 Form 1040N](https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/f_1040N.pdf) line 18                                                                                                                      |
+| NE 2026      | sourced; confirm on the 2026 1040N        | 176 / 352 / 176 / 176        | none                               | —             | —                | [Tax Rate Chronology Table 1, Rev. 2-2026](https://revenue.nebraska.gov/sites/default/files/doc/research/chronology/4-607table1.pdf); 2026 1040N-ES                                                                             |
+
+**California** tapers, it does not stop. The Form 540 AGI Limitation
+Worksheet divides AGI over the threshold by $2,500 ($1,250 separate), rounds
+up "to the next higher whole number", and multiplies $6 by that and by the
+number of credits on lines 7–9 — two on a joint return, hence $12. The bands
+use Connecticut's encoding of round-up steps (taper band from threshold + 1,
+one step already off, running to `INFINITY` with the default floor of 0 — no
+zero band, which `exemptionCreditCliffWithin` would report as an AGI cliff;
+none is reported anywhere in the phase-out). Checked
+against the real resolver: 1.6 million incomes across four years and four
+statuses, every one equal to the worksheet. The 2026 thresholds are each the
+2025 threshold × 1.034, rounded — FTB's published factor — but appear only in
+the memo, which FTB has not posted; re-check against the 2026 540 booklet in
+late December. The credit is exhausted well before $1,000,000, so it never
+offsets the 1% surcharge folded into California's top bracket.
+
+**Nebraska** is flat. Neb. Rev. Stat. 77-2716.01(1)(b) multiplies the year's
+amount by dependants "plus two for a married filing jointly return or plus one
+for any other return", with no income test; the Chronology notes the old
+phase-out ended with tax year 2005.
+
+Still not modelled, in either state: credits for dependants, and California's
+blind and senior credits (Form 540 lines 8–10).

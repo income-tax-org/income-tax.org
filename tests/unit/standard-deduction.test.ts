@@ -28,6 +28,7 @@ import type { DeductionBand, TaxData } from "@/types";
 import { toUnit } from "@/utils/money";
 import wisconsin2025 from "@/data/2025/state/wisconsin";
 import oregon2026 from "@/data/2026/state/oregon";
+import california2025 from "@/data/2025/state/california";
 import wisconsin2023 from "@/data/2023/state/wisconsin";
 import oregon2025 from "@/data/2025/state/oregon";
 import federal2025 from "@/data/2025/federal";
@@ -522,5 +523,43 @@ describe("Oregon's exemption credit cliff", () => {
       limit: 200_000,
       amount: 526,
     });
+  });
+});
+
+describe("California's exemption credit phase-out", () => {
+  const california = california2025 as TaxData;
+
+  // Form 540 AGI Limitation Worksheet: $6 off each credit for each $2,500
+  // ($1,250 separately), "or fraction thereof", of federal AGI over $252,203
+  // ($504,411 joint, $378,310 head of household). Two credits on a joint
+  // return, so $12 a step there.
+  it.each([
+    [SINGLE, 252_203, 153],
+    [SINGLE, 252_204, 147],
+    [SINGLE, 254_703, 147],
+    [SINGLE, 254_704, 141],
+    [SINGLE, 260_000, 129],
+    [SINGLE, 314_703, 3],
+    [SINGLE, 314_704, 0],
+    [MARRIED, 530_000, 174],
+    [MARRIED_SEPARATELY, 260_000, 111],
+    [HEAD_OF_HOUSEHOLD, 400_000, 99],
+  ])("%s at %i gets %i", (filingStatus, income, credit) => {
+    expect(
+      personalExemptionCreditFor(
+        california,
+        filingStatus as FilingStatus,
+        income as number,
+      ),
+    ).toBe(credit);
+  });
+
+  it("is a taper, not a cliff, even where it runs out", () => {
+    expect(
+      exemptionCreditCliffWithin(california, SINGLE, 314_650, 100),
+    ).toBeNull();
+    expect(
+      exemptionCreditCliffWithin(california, SINGLE, 252_150, 100),
+    ).toBeNull();
   });
 });
