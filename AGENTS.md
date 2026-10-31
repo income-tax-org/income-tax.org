@@ -194,6 +194,13 @@ npm run start                  # Serves out/ directory
 - Generates sitemap with `next-sitemap`
 - Updates PWA manifest with [scripts/update-manifest.js](./scripts/update-manifest.js)
 
+**Service worker:** next-pwa writes `public/sw.js` (gitignored) during the
+build, and the export copies it into `out/`. Don't point next-pwa's `dest` at
+`out/`: the export clears that directory and the worker never ships. Its own
+auto-registration only reaches Pages Router entries, so
+[use-service-worker.ts](./src/hooks/use-service-worker.ts) registers it.
+`tests/e2e/pwa.spec.ts` checks offline loading on CI.
+
 ### CI/CD (GitHub Actions)
 
 Two workflows run on push/PR:

@@ -7,9 +7,11 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { getTheme } from "@/theme";
 import { ColorModeContext } from "@/context/color-mode";
+import { useServiceWorker } from "@/hooks/use-service-worker";
 import type { Viewport } from "next";
 
 export default function RootLayout(props: { children: ReactNode }) {
+  useServiceWorker();
   const [mode, setMode] = useState<"light" | "dark">("light");
   const colorMode = useMemo(
     () => ({
